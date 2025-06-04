@@ -13,6 +13,7 @@ interface RecordingHistoryProps {
 
 export function RecordingHistory({ recordings, isLoading }: RecordingHistoryProps) {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const deleteRecordingMutation = useMutation({
     mutationFn: async (id: number) => {

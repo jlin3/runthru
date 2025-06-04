@@ -13,6 +13,8 @@ import { voiceAgentService } from "./services/voiceAgentService";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import { exec } from "child_process";
+import { promisify } from "util";
 
 // Configure multer for file uploads
 const upload = multer({
@@ -542,7 +544,19 @@ async function executeRecording(
       videoPath = await playwrightService.startRecording(
         recording.targetUrl,
         recording.testSteps,
-        recording.browserConfig
+        recording.browserConfig,
+        (step: string, progress: number) => {
+          broadcast({ 
+            type: "recording_progress", 
+            recordingId: id, 
+            step,
+            progress
+          });
+          storage.updateRecording(id, { 
+            currentStep: step,
+            progress
+          });
+        }
       );
     } catch (playwrightError) {
       console.log("Using alternative recording method");
@@ -679,9 +693,7 @@ async function createSystemRecording(
   
   progressCallback("Starting screen recording", 20);
   
-  const { exec } = require('child_process');
-  const util = require('util');
-  const execAsync = util.promisify(exec);
+  const execAsync = promisify(exec);
   
   try {
     progressCallback("Recording test scenario", 40);

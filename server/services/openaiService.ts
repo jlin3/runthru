@@ -1,4 +1,6 @@
 import OpenAI from "openai";
+import * as fs from "fs";
+import * as path from "path";
 
 const openai = new OpenAI({ 
   apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
@@ -67,6 +69,30 @@ Provide only the narration text, no formatting or stage directions.`;
     } catch (error) {
       console.error("Error generating narration script:", error);
       throw new Error("Failed to generate narration script");
+    }
+  }
+
+  async generateSpeech(text: string, voice: string = "alloy"): Promise<string> {
+    try {
+      const response = await openai.audio.speech.create({
+        model: "tts-1",
+        voice: voice as any,
+        input: text,
+      });
+
+      const audioDir = path.join(process.cwd(), "uploads", "audio");
+      if (!fs.existsSync(audioDir)) {
+        fs.mkdirSync(audioDir, { recursive: true });
+      }
+
+      const audioPath = path.join(audioDir, `narration_${Date.now()}.mp3`);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      fs.writeFileSync(audioPath, buffer);
+
+      return audioPath;
+    } catch (error) {
+      console.error("Error generating speech:", error);
+      throw new Error("Failed to generate speech");
     }
   }
 }

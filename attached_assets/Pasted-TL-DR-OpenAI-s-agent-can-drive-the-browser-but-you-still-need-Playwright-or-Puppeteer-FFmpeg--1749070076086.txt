@@ -1,0 +1,134 @@
+TL;DR — OpenAI’s agent can drive the browser, but you still need Playwright (or Puppeteer + FFmpeg) to capture the pixels; below is a ready-to-run Playwright script that records the session while an OpenAI “computer_use” agent clicks through the flow, plus a fallback pure-Playwright recipe.
+
+⸻
+
+1. Why OpenAI alone can’t record the screen
+	1.	The new computer_use tool in the Responses API lets GPT-4 issue mouse/keyboard actions in a local Playwright browser sandbox, effectively acting as an autonomous QA tester.  ￼ ￼
+	2.	That tool does not expose raw video frames; OpenAI’s docs recommend wiring the agent into an existing browser that you configure for recording.  ￼
+	3.	Playwright’s recordVideo context option automatically writes a .webm/.mp4 when the context closes, giving you a lossless capture with ~3 lines of config.  ￼ ￼
+
+⸻
+
+2. Fastest path: Playwright + OpenAI agent (Python)
+
+You’ll run the agent loop once with high-level instructions; every click the model asks for is executed by Playwright, and Playwright silently records everything.
+
+	1.	Install deps
+
+pip install openai playwright
+playwright install chromium
+
+
+	2.	Minimal agent driver (agent_record.py)
+
+import openai, asyncio, os, json
+from playwright.async_api import async_playwright
+
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+SYSTEM_PROMPT = """
+You are a QA bot. Drive the browser to: 
+1. https://bookvid.com 
+2. Open marketplace 
+3. Scroll to any creator profile 
+4. Click “Personalized Video Request”
+5. Complete checkout with test data
+Narrate actions when asked.
+"""
+
+async def main():
+    async with async_playwright() as p:
+        ctx = await p.chromium.launch_persistent_context(
+            user_data_dir="tmp_profile",
+            headless=False,
+            record_video_dir="recordings",           #  ← capture dir
+            viewport={"width": 1280, "height": 720}
+        )
+        page = await ctx.new_page()
+
+        # simple helper to let the model drive
+        def make_tool_response(req_json):
+            # req_json like {"action":"click","selector":"text=Checkout"}
+            if req_json["action"] == "goto":
+                return page.goto(req_json["url"])
+            if req_json["action"] == "click":
+                return page.click(req_json["selector"])
+            if req_json["action"] == "type":
+                return page.fill(req_json["selector"], req_json["text"])
+            if req_json["action"] == "wait":
+                return page.wait_for_timeout(req_json["ms"])
+
+        # single round-trip demo; expand to full loop in practice
+        resp = openai.chat.completions.create(
+            model="gpt-4o-mini",
+            tools=[{
+                "type":"function",
+                "function":{
+                    "name":"browser_action",
+                    "description":"Drive Playwright",
+                    "parameters":{"type":"object"}
+                }
+            }],
+            messages=[{"role":"system","content":SYSTEM_PROMPT}]
+        )
+        calls = json.loads(resp.choices[0].message.tool_calls[0].function.arguments)
+        for call in calls:
+            await make_tool_response(call)
+
+        await ctx.close()        # video finalised here
+asyncio.run(main())
+
+When the script exits, Playwright drops recordings/<page-id>.webm.  ￼
+
+⸻
+
+3. Pure-Playwright fallback (no OpenAI agent)
+
+If you just need recording and prefer a hard-coded journey, this 25-line Node.js snippet delivers:
+
+npm i -D playwright
+npx playwright install
+
+// record.js
+const { chromium } = require('playwright');
+(async () => {
+  const browser = await chromium.launch({ headless: false });
+  const context = await browser.newContext({
+    recordVideo: { dir: 'recordings/', size: { width: 1280, height: 720 } } // ← enable capture
+  });
+  const page = await context.newPage();
+
+  await page.goto('https://bookvid.com');                      // step 1
+  await page.click('text=Marketplace');                        // step 2
+  await page.waitForTimeout(2000);                             // let items load
+  await page.click('css=.profile-card:nth-of-type(1)');        // step 3
+  await page.click('text=Personalized Video Request');         // step 4
+  await page.fill('input[name="name"]', 'Test User');          // form filler
+  /* …continue the payment flow with your test creds… */
+
+  await context.close();   // Playwright renders recordings/<…>.webm
+})();
+
+Playwright merges all pop-ups in the same context so every tab is captured automatically  ￼.
+
+⸻
+
+4. Tips for Loom-style polish
+	1.	Convert .webm → .mp4 if Loom upload rejects webm:
+ffmpeg -i input.webm -c:v libx264 -crf 23 -preset fast output.mp4  ￼
+	2.	Overlay avatar bubble later with FFmpeg:
+ffmpeg -i output.mp4 -i avatar.png -filter_complex "[0:v][1:v] overlay=W-w-20:H-h-20" final.mp4  ￼
+	3.	Puppeteer alternatives exist (e.g., puppeteer-screen-recorder or puppeteer-video-recorder) if you prefer Puppeteer over Playwright; both stream frames via Chrome DevTools Protocol and stitch with FFmpeg  ￼ ￼.
+
+⸻
+
+5. Troubleshooting checklist
+	1.	No video generated? Ensure you await context.close(); Playwright writes the file on closure  ￼.
+	2.	Black screen inside Docker? Add --disable-gpu --no-sandbox launch flags or use Xvfb.
+	3.	Audio narration desync? Insert page.wait_for_timeout delays so visuals match narration runtime.
+
+⸻
+
+✅ Next checkpoint
+
+Run the Python agent script on a trivial flow first (e.g., just open example.com) to confirm video output before layering in GPT-driven complexity. Once video capture is stable, integrate ElevenLabs TTS and FFmpeg overlay to complete the Loom-style polish.

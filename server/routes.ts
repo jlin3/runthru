@@ -592,10 +592,9 @@ async function executeRecording(
       recording.narrationConfig.style
     );
 
-    const audioPath = await elevenlabsService.generateSpeech(
+    const audioPath = await openaiService.generateSpeech(
       narrationScript,
-      recording.narrationConfig.voice,
-      recording.narrationConfig.speed
+      recording.narrationConfig.voice
     );
 
     // Step 3: Video Composition

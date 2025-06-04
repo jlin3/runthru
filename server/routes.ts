@@ -594,7 +594,7 @@ async function executeRecording(
 
     const audioPath = await openaiService.generateSpeech(
       narrationScript,
-      recording.narrationConfig.voice
+      "alloy" // Use valid OpenAI voice
     );
 
     // Step 3: Video Composition

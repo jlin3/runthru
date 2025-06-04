@@ -1,0 +1,59 @@
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+8:56:04 PM [express] serving on port 5000
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+8:56:07 PM [express] GET /api/recordings 304 in 3ms :: []
+8:56:24 PM [express] GET /api/recordings 304 in 1ms :: []
+8:57:00 PM [express] POST /api/recordings/generate-steps 200 in 5458ms :: {"steps":["Navigate to htt…
+8:57:01 PM [express] POST /api/recordings 201 in 5ms :: {"id":1,"title":"Test Recording - 6/4/2025",…
+8:57:01 PM [express] POST /api/recordings/1/start 200 in 9ms :: {"message":"Recording started succes…
+Using alternative recording method
+Error generating speech: BadRequestError: 400 [{'type': 'enum', 'loc': ('body', 'voice'), 'msg': "Input should be 'nova', 'shimmer', 'echo', 'onyx', 'fable', 'alloy', 'ash', 'sage' or 'coral'", 'input': 'Rachel', 'ctx': {'expected': "'nova', 'shimmer', 'echo', 'onyx', 'fable', 'alloy', 'ash', 'sage' or 'coral'"}}]
+    at Function.generate (/home/runner/workspace/node_modules/openai/src/core/error.ts:72:14)
+    at OpenAI.makeStatusError (/home/runner/workspace/node_modules/openai/src/client.ts:400:28)
+    at OpenAI.makeRequest (/home/runner/workspace/node_modules/openai/src/client.ts:616:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async OpenAIService.generateSpeech (/home/runner/workspace/server/services/openaiService.ts:77:24)
+    at async executeRecording (/home/runner/workspace/server/routes.ts:595:23) {
+  status: 400,
+  headers: Headers {
+    date: 'Wed, 04 Jun 2025 20:57:31 GMT',
+    'content-type': 'application/json',
+    'transfer-encoding': 'chunked',
+    connection: 'keep-alive',
+    'access-control-expose-headers': 'X-Request-ID',
+    'openai-organization': 'substream-68k1rl',
+    'openai-processing-ms': '56',
+    'openai-version': '2020-10-01',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    via: 'envoy-router-7567876bbd-hdl9t',
+    'x-envoy-upstream-service-time': '59',
+    'x-ratelimit-limit-requests': '500',
+    'x-ratelimit-remaining-requests': '499',
+    'x-ratelimit-reset-requests': '120ms',
+    'x-request-id': 'req_9bb0ce7714d79c9daafda39c7dcdea6b',
+    'cf-cache-status': 'DYNAMIC',
+    'set-cookie': '__cf_bm=daFARq0jpKrLphwAKRKqR5UXOjFPAlgN2ZiQ1IEnow4-1749070651-1.0.1.1-ByvPHVtgHUIGvzLpwCZLwpEJRf.RUcdTYgUSLf.TXXoP1GDlrmHH2ZB5wPbYzQJFj7VLjXoLYaThpqo3Cm_reX6huGxqeviHzFi5_fjE1bg; path=/; expires=Wed, 04-Jun-25 21:27:31 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=_RX9nOWbhQMWzANP3jjwTJIeQtw5Mob8yg0KRClkbTI-1749070651361-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'x-content-type-options': 'nosniff',
+    server: 'cloudflare',
+    'cf-ray': '94aa57d02b2da599-ORD',
+    'alt-svc': 'h3=":443"; ma=86400'
+  },
+  requestID: 'req_9bb0ce7714d79c9daafda39c7dcdea6b',
+  error: {
+    message: `[{'type': 'enum', 'loc': ('body', 'voice'), 'msg': "Input should be 'nova', 'shimmer', 'echo', 'onyx', 'fable', 'alloy', 'ash', 'sage' or 'coral'", 'input': 'Rachel', 'ctx': {'expected': "'nova', 'shimmer', 'echo', 'onyx', 'fable', 'alloy', 'ash', 'sage' or 'coral'"}}]`,
+    type: 'invalid_request_error',
+    param: null,
+    code: null
+  },
+  code: null,
+  param: null,
+  type: 'invalid_request_error'
+}
+Recording execution error: Error: Failed to generate speech
+    at OpenAIService.generateSpeech (/home/runner/workspace/server/services/openaiService.ts:95:13)
+    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)
+    at async executeRecording (/home/runner/workspace/server/routes.ts:595:23)

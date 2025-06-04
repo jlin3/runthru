@@ -125,7 +125,7 @@ export function VoiceAgent({ onTestStepsGenerated, onNarrationGenerated }: Voice
       
       // Connect to WebSocket for real-time communication
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const ws = new WebSocket(`${protocol}//${window.location.host}/voice`);
+      const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
       
       ws.onopen = () => {
         setConnectionStatus("connected");

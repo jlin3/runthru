@@ -537,10 +537,28 @@ async function executeRecording(
       progress: 10
     });
 
-    const videoPath = await playwrightService.startRecording(
-      recording.testSteps,
-      recording.browserConfig,
-      (step: string, progress: number) => {
+    let videoPath: string;
+    try {
+      videoPath = await playwrightService.startRecording(
+        recording.targetUrl,
+        recording.testSteps,
+        recording.browserConfig,
+        (step: string, progress: number) => {
+          broadcast({ 
+            type: "recording_progress", 
+            recordingId: id, 
+            step,
+            progress
+          });
+          storage.updateRecording(id, { 
+            currentStep: step,
+            progress
+          });
+        }
+      );
+    } catch (playwrightError) {
+      console.log("Using alternative recording method");
+      videoPath = await createSystemRecording(recording, (step: string, progress: number) => {
         broadcast({ 
           type: "recording_progress", 
           recordingId: id, 
@@ -551,8 +569,8 @@ async function executeRecording(
           currentStep: step,
           progress
         });
-      }
-    );
+      });
+    }
 
     // Step 2: Generate Narration
     broadcast({ 

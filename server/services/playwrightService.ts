@@ -27,7 +27,8 @@ export class PlaywrightService {
       const browserType = this.getBrowserType(browserConfig.browser);
       this.browser = await browserType.launch({
         headless: browserConfig.headless,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        executablePath: '/usr/bin/chromium',
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
       });
 
       // Parse viewport

@@ -121,7 +121,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      const steps = await openaiService.generateTestSteps(description, targetUrl);
+      let steps;
+      try {
+        steps = await openaiService.generateTestSteps(description, targetUrl);
+      } catch (apiError) {
+        console.log("OpenAI API not available, generating fallback steps");
+        steps = generateFallbackSteps(description, targetUrl);
+      }
       res.json({ steps });
     } catch (error) {
       console.error("Error generating test steps:", error);

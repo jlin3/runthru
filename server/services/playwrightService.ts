@@ -9,6 +9,7 @@ export class PlaywrightService {
   private isRecording = false;
 
   async startRecording(
+    targetUrl: string,
     testSteps: string[],
     browserConfig: {
       browser: string;

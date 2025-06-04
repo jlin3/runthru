@@ -8,6 +8,8 @@ import { openaiService } from "./services/openaiService";
 import { elevenlabsService } from "./services/elevenlabsService";
 import { playwrightService } from "./services/playwrightService";
 import { videoService } from "./services/videoService";
+import { realtimeVoiceService } from "./services/realtimeVoiceService";
+import { voiceAgentService } from "./services/voiceAgentService";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -29,7 +31,7 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
-  const wss = new WebSocketServer({ server: httpServer });
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
   // WebSocket connection for real-time updates
   wss.on("connection", (ws) => {
@@ -296,6 +298,212 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ 
         message: "Failed to delete recording",
         error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Voice Agent Routes using OpenAI Realtime API
+  
+  // Create QA Assistant voice session
+  app.post("/api/voice/qa-assistant", async (req, res) => {
+    try {
+      const session = await realtimeVoiceService.createQAAssistantSession();
+      res.json({ 
+        message: "QA Assistant voice session created",
+        sessionId: "qa-assistant-" + Date.now()
+      });
+    } catch (error) {
+      console.error("Error creating QA assistant session:", error);
+      res.status(500).json({ 
+        message: "Failed to create voice session",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Create narration agent voice session
+  app.post("/api/voice/narrator", async (req, res) => {
+    try {
+      const session = await realtimeVoiceService.createNarrationAgentSession();
+      res.json({ 
+        message: "Narration agent voice session created",
+        sessionId: "narrator-" + Date.now()
+      });
+    } catch (error) {
+      console.error("Error creating narrator session:", error);
+      res.status(500).json({ 
+        message: "Failed to create narrator session",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Create test generator voice session
+  app.post("/api/voice/test-generator", async (req, res) => {
+    try {
+      const session = await realtimeVoiceService.createTestGeneratorSession();
+      res.json({ 
+        message: "Test generator voice session created",
+        sessionId: "test-generator-" + Date.now()
+      });
+    } catch (error) {
+      console.error("Error creating test generator session:", error);
+      res.status(500).json({ 
+        message: "Failed to create test generator session",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Voice-based test step generation
+  app.post("/api/voice/generate-steps", async (req, res) => {
+    try {
+      const { description, targetUrl, audioData } = req.body;
+      
+      if (audioData) {
+        // Process voice input through Realtime API
+        const audioBuffer = Buffer.from(audioData, 'base64');
+        realtimeVoiceService.sendAudio(audioBuffer.buffer);
+        res.json({ message: "Voice input received, processing..." });
+      } else if (description && targetUrl) {
+        // Fallback to text-based generation
+        const steps = await voiceAgentService.generateTestStepsFromVoice(description, targetUrl);
+        res.json({ steps });
+      } else {
+        return res.status(400).json({ 
+          message: "Either audio data or description and target URL are required" 
+        });
+      }
+    } catch (error) {
+      console.error("Error processing voice test generation:", error);
+      res.status(500).json({ 
+        message: "Failed to process voice input",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Voice-based narration generation
+  app.post("/api/voice/generate-narration", async (req, res) => {
+    try {
+      const { testSteps, targetUrl, audioData } = req.body;
+      
+      if (audioData) {
+        // Process voice input for narration preferences
+        const audioBuffer = Buffer.from(audioData, 'base64');
+        realtimeVoiceService.sendAudio(audioBuffer.buffer);
+        res.json({ message: "Voice narration input received, processing..." });
+      } else if (testSteps && targetUrl) {
+        // Generate narration script
+        const narrationScript = await voiceAgentService.generateNarrationFromSteps(testSteps, targetUrl);
+        res.json({ narrationScript });
+      } else {
+        return res.status(400).json({ 
+          message: "Test steps and target URL are required" 
+        });
+      }
+    } catch (error) {
+      console.error("Error generating narration:", error);
+      res.status(500).json({ 
+        message: "Failed to generate narration",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Send text message to voice agent
+  app.post("/api/voice/send-message", async (req, res) => {
+    try {
+      const { message, agentType } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      realtimeVoiceService.sendText(message);
+      res.json({ message: "Message sent to voice agent" });
+    } catch (error) {
+      console.error("Error sending message to voice agent:", error);
+      res.status(500).json({ 
+        message: "Failed to send message",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Get voice agent instructions (for client-side display)
+  app.get("/api/voice/instructions", (req, res) => {
+    try {
+      const instructions = voiceAgentService.getVoiceAgentInstructions();
+      res.json(instructions);
+    } catch (error) {
+      console.error("Error getting voice instructions:", error);
+      res.status(500).json({ 
+        message: "Failed to get voice instructions",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
+  // Enhanced WebSocket for voice agent integration
+  const voiceClients = new Map<string, any>();
+
+  wss.on("connection", (ws, req) => {
+    const clientId = req.url?.includes('voice') ? `voice-${Date.now()}` : `recording-${Date.now()}`;
+    
+    if (req.url?.includes('voice')) {
+      voiceClients.set(clientId, ws);
+      console.log(`Voice agent client connected: ${clientId}`);
+      
+      ws.on("message", async (data) => {
+        try {
+          const message = JSON.parse(data.toString());
+          
+          switch (message.type) {
+            case 'voice_audio':
+              // Handle incoming audio from client
+              const audioBuffer = Buffer.from(message.audio, 'base64');
+              realtimeVoiceService.sendAudio(audioBuffer.buffer);
+              break;
+              
+            case 'voice_text':
+              // Handle text message to voice agent
+              realtimeVoiceService.sendText(message.text);
+              break;
+              
+            case 'create_session':
+              // Create appropriate voice session
+              switch (message.agentType) {
+                case 'qa-assistant':
+                  await realtimeVoiceService.createQAAssistantSession();
+                  break;
+                case 'narrator':
+                  await realtimeVoiceService.createNarrationAgentSession();
+                  break;
+                case 'test-generator':
+                  await realtimeVoiceService.createTestGeneratorSession();
+                  break;
+              }
+              break;
+          }
+        } catch (error) {
+          console.error("Error handling voice WebSocket message:", error);
+          ws.send(JSON.stringify({ 
+            type: 'error', 
+            error: error instanceof Error ? error.message : "Unknown error" 
+          }));
+        }
+      });
+
+      ws.on("close", () => {
+        voiceClients.delete(clientId);
+        console.log(`Voice agent client disconnected: ${clientId}`);
+      });
+    } else {
+      console.log("WebSocket client connected");
+      
+      ws.on("close", () => {
+        console.log("WebSocket client disconnected");
       });
     }
   });

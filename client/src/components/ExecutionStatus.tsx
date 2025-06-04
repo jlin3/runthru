@@ -57,7 +57,7 @@ export function ExecutionStatus({ recordingId, onComplete }: ExecutionStatusProp
   useEffect(() => {
     // Connect to WebSocket for real-time updates
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const ws = new WebSocket(`${protocol}//${window.location.host}`);
+    const ws = new WebSocket(`${protocol}//${window.location.host}/ws`);
 
     ws.onmessage = (event) => {
       const data: WSMessage = JSON.parse(event.data);

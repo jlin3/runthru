@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { apiRequest } from "@/lib/queryClient";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import type { Recording } from "@shared/schema";
 
@@ -90,7 +89,7 @@ export function ExecutionStatus({ recordingId, onComplete }: ExecutionStatusProp
     return () => {
       ws.close();
     };
-  }, [recordingId, onComplete, toast]);
+  }, [recordingId, onComplete, toast, queryClient]);
 
   if (isLoading || !recording) {
     return (
@@ -191,76 +190,6 @@ export function ExecutionStatus({ recordingId, onComplete }: ExecutionStatusProp
           </div>
           <Progress value={progress} className="w-full" />
         </div>
-
-        {/* Execution Steps */}
-        <div className="space-y-3">
-          <h4 className="font-medium text-sm">Pipeline Steps</h4>
-          <div className="space-y-2">
-            {[
-              { step: "Browser Setup", threshold: 10 },
-              { step: "Test Execution", threshold: 30 },
-              { step: "Screen Recording", threshold: 60 },
-              { step: "Generating Narration", threshold: 70 },
-              { step: "Video Composition", threshold: 85 },
-              { step: "Finalizing", threshold: 100 },
-            ].map(({ step, threshold }) => {
-              const isActive = currentStep.includes(step) || progress >= threshold;
-              const isCompleted = progress > threshold;
-              
-              return (
-                <div
-                  key={step}
-                  className={`flex items-center space-x-3 p-2 rounded-md transition-colors ${
-                    isActive
-                      ? "bg-blue-50 border border-blue-200"
-                      : isCompleted
-                      ? "bg-green-50 border border-green-200"
-                      : "bg-gray-50 border border-gray-200"
-                  }`}
-                >
-                  <div className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                    isCompleted
-                      ? "bg-green-500 text-white"
-                      : isActive
-                      ? "bg-blue-500 text-white animate-pulse"
-                      : "bg-gray-300"
-                  }`}>
-                    {isCompleted ? (
-                      <svg className="w-2 h-2" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
-                      </svg>
-                    ) : isActive ? (
-                      <div className="w-1 h-1 bg-white rounded-full"></div>
-                    ) : null}
-                  </div>
-                  <span className={`text-sm ${
-                    isActive ? "font-medium" : ""
-                  }`}>
-                    {step}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Live Preview */}
-        {status === "recording" && (
-          <div className="space-y-3">
-            <h4 className="font-medium text-sm">Live Preview</h4>
-            <div className="bg-gray-900 rounded-lg p-4">
-              <div className="aspect-video bg-gray-800 rounded flex items-center justify-center">
-                <div className="text-center text-gray-400">
-                  <div className="w-12 h-12 bg-red-500 rounded-full mx-auto mb-3 flex items-center justify-center animate-pulse">
-                    <div className="w-3 h-3 bg-white rounded-full"></div>
-                  </div>
-                  <p className="text-sm">Recording in Progress</p>
-                  <p className="text-xs opacity-75">Browser automation active</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Action Buttons */}
         <div className="flex space-x-3">

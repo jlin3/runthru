@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ConfigurationForm } from "@/components/ConfigurationForm";
-import { ExecutionStatus } from "@/components/ExecutionStatus";
+import { ExecutionStatus } from "@/components/ExecutionStatusFixed";
 import { RecordingHistory } from "@/components/RecordingHistory";
 import { VoiceAgent } from "@/components/VoiceAgent";
 import { useRecording } from "@/hooks/useRecording";

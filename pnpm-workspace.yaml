@@ -1,0 +1,7 @@
+packages:
+  - packages/*
+ignoredBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - bufferutil
+  - esbuild
+  - ffmpeg-static

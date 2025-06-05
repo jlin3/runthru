@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Spawn agent process with test description and hardcoded OpenAI key
   const child = spawn(
     "pnpm",
-    ["--filter", "@runthru/agent", "exec", "ts-node", "src/index.ts", testDescription || "Demo test"],
+    ["--filter", "@runthru/agent", "exec", "tsx", "src/index.ts", testDescription || "Demo test"],
     {
       cwd: process.cwd(),
       env: { ...process.env, OPENAI_API_KEY },

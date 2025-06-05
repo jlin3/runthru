@@ -25,6 +25,7 @@ const Home = () => {
   const [testDescription, setTestDescription] = useState("");
   const [prLink, setPrLink] = useState("");
   const [isConnectedToGithub, setIsConnectedToGithub] = useState(false);
+  const [summaryLog, setSummaryLog] = useState<string[]>([]);
 
   const updateStep = (id: string, status: Step["status"]) => {
     setSteps((prev) => prev.map((s) => (s.id === id ? { ...s, status } : s)));
@@ -52,6 +53,7 @@ const Home = () => {
     setSteps(INITIAL_STEPS);
     setReplyAudio(undefined);
     setVideoUrl(undefined);
+    setSummaryLog([]);
 
     try {
       const resp = await fetch("/api/agent", {
@@ -85,17 +87,22 @@ const Home = () => {
             const evt = JSON.parse(line);
             if (evt.event === "tool_start") {
               updateStep(evt.tool, "running");
+              setSummaryLog((log) => [...log, `Started: ${evt.tool.replace(/_/g, ' ')}`]);
             } else if (evt.event === "tool_end") {
               updateStep(evt.tool, "done");
+              setSummaryLog((log) => [...log, `Completed: ${evt.tool.replace(/_/g, ' ')}`]);
             } else if (evt.event === "handoff_start") {
-              console.log(`Agent ${evt.agent} started`);
+              setSummaryLog((log) => [...log, `Agent: ${evt.agent} started`]);
             } else if (evt.event === "handoff_end") {
-              console.log(`Agent ${evt.agent} completed`);
+              setSummaryLog((log) => [...log, `Agent: ${evt.agent} completed`]);
             } else if (evt.event === "tts_complete") {
               setReplyAudio(evt.reply);
               setVideoUrl(evt.video);
             } else if (evt.event === "agent_complete") {
               setVideoUrl(evt.video);
+              setSummaryLog((log) => [...log, "Agent pipeline complete."]);
+            } else if (evt.event === "error") {
+              setSummaryLog((log) => [...log, `Error: ${evt.error}`]);
             }
           } catch (err) {
             console.error("Failed to parse", line, err);
@@ -120,25 +127,6 @@ const Home = () => {
         {/* Left Column - Form */}
         <div className="flex-1 w-full max-w-xl space-y-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* GitHub Connection */}
-            <div className="bg-white p-4 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold mb-2 text-gray-800">GitHub Integration</h3>
-              {!isConnectedToGithub ? (
-                <button
-                  type="button"
-                  onClick={handleConnectGithub}
-                  className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors"
-                >
-                  Connect to GitHub
-                </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span className="w-3 h-3 bg-green-500 rounded-full"></span>
-                  <span className="text-green-700 font-medium">Connected to GitHub</span>
-                </div>
-              )}
-            </div>
-
             {/* Test Description */}
             <div className="bg-white p-4 rounded-lg shadow-sm border">
               <h3 className="text-lg font-semibold mb-2 text-gray-800">Test Description</h3>
@@ -146,7 +134,10 @@ const Home = () => {
                 <textarea
                   value={testDescription}
                   onChange={(e) => setTestDescription(e.target.value)}
-                  placeholder="Example: Go to bookvid.com/jesse and book a session"
+                  placeholder={
+                    `Best practice: Describe a clear, user-focused scenario with expected outcome.\n\nExample: ` +
+                    `"Visit https://bookvid.com/jesse, click 'Book a Session', select a date and time, fill in the form with test user info, submit, and verify the confirmation page appears with correct details."`
+                  }
                   className="w-full h-24 p-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
@@ -159,9 +150,8 @@ const Home = () => {
                 </button>
               </div>
             </div>
-
-            {/* PR Link (Optional) */}
-            <div className="bg-white p-4 rounded-lg shadow-sm border">
+            {/* PR Link (Optional) + Connect to GitHub */}
+            <div className="bg-white p-4 rounded-lg shadow-sm border flex flex-col gap-3">
               <h3 className="text-lg font-semibold mb-2 text-gray-800">GitHub PR Link (Optional)</h3>
               <input
                 type="url"
@@ -170,6 +160,22 @@ const Home = () => {
                 placeholder="https://github.com/username/repo/pull/123"
                 className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+              <div>
+                {!isConnectedToGithub ? (
+                  <button
+                    type="button"
+                    onClick={handleConnectGithub}
+                    className="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 transition-colors mt-2"
+                  >
+                    Connect to GitHub
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="w-3 h-3 bg-green-500 rounded-full"></span>
+                    <span className="text-green-700 font-medium">Connected to GitHub</span>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Submit Button */}
@@ -217,7 +223,7 @@ const Home = () => {
 
         {/* Right Column - Progress Steps */}
         <div className="w-full max-w-sm lg:sticky lg:top-8 lg:self-start">
-          <div className="bg-white p-4 rounded-lg shadow-sm border">
+          <div className="bg-white p-4 rounded-lg shadow-sm border mb-4">
             <h3 className="text-lg font-semibold mb-4 text-gray-800 text-center">Agent Pipeline Progress</h3>
             <div className="space-y-3">
               {steps.map((step, index) => (
@@ -251,6 +257,17 @@ const Home = () => {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+          {/* Streaming summary log */}
+          <div className="bg-white p-4 rounded-lg shadow-sm border">
+            <h3 className="text-lg font-semibold mb-2 text-gray-800 text-center">Live Agent Log</h3>
+            <div className="h-40 overflow-y-auto text-sm text-gray-700 space-y-1 font-mono">
+              {summaryLog.length === 0 ? (
+                <div className="text-gray-400 text-center">Agent progress will appear here…</div>
+              ) : (
+                summaryLog.map((msg, i) => <div key={i}>{msg}</div>)
+              )}
             </div>
           </div>
         </div>

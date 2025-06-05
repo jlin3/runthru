@@ -3,6 +3,7 @@ import { tool } from "@openai/agents";
 import OpenAI from "openai";
 import { writeFile } from "fs/promises";
 import { join } from "path";
+import fs from 'fs-extra';
 
 const openai = new OpenAI();
 
@@ -16,19 +17,21 @@ export const generateVoiceover = tool({
     console.log(JSON.stringify({ event: "tool_start", tool: "generate_voiceover", detail: "Synthesizing audio..." }));
     
     try {
-      const speech = await openai.audio.speech.create({
+      const response = await openai.audio.speech.create({
         model: "tts-1",
         voice: "alloy",
         input: text,
       });
       
-      const buffer = Buffer.from(await speech.arrayBuffer());
-      const audioPath = join("uploads", "audio", `voiceover-${Date.now()}.mp3`);
-      await writeFile(audioPath, buffer);
+      const audioDir = join(process.cwd(), 'uploads', 'audio');
+      await fs.ensureDir(audioDir);
+      const filePath = join(audioDir, `voiceover-${Date.now()}.mp3`);
+      const buffer = Buffer.from(await response.arrayBuffer());
+      await fs.writeFile(filePath, buffer);
       
-      console.log(JSON.stringify({ event: "tool_end", tool: "generate_voiceover", detail: `Audio saved to ${audioPath}` }));
+      console.log(JSON.stringify({ event: "tool_end", tool: "generate_voiceover", detail: `Audio saved to ${filePath}` }));
       
-      return `Successfully generated voiceover. Audio available at: ${audioPath}`;
+      return { filePath };
     } catch (error: any) {
       console.error(JSON.stringify({ event: "error", tool: "generate_voiceover", detail: error.message }));
       throw new Error(`Voiceover generation failed: ${error.message}`);

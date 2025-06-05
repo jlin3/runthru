@@ -1,6 +1,16 @@
 import OpenAI from "openai";
-import * as fs from "fs";
+import * as fs from "fs-extra";
 import * as path from "path";
+import { ChatCompletionContentPart } from "openai/resources/index.js";
+
+interface SessionEvent {
+    id: number;
+    timestamp: number;
+    action: string;
+    detail: any;
+    success: boolean;
+    screenshot?: string;
+  }
 
 export class OpenAIService {
   private openai: OpenAI | null = null;
@@ -50,6 +60,75 @@ Example format:
       console.error("Error generating test steps:", error);
       throw new Error("Failed to generate test steps");
     }
+  }
+
+  async generateNarrationFromCUA(sessionEvents: SessionEvent[], sessionDir: string): Promise<string> {
+    const timelineJson = sessionEvents.map(e => `[${new Date(e.timestamp).toISOString().substr(14, 5)}] ${e.action}: ${e.detail}`).join('\n');
+
+    const imageMessages: ChatCompletionContentPart[] = [];
+    const screenshots = sessionEvents.filter(e => e.screenshot).slice(0, 5); // Limit to 5 screenshots
+    for (const event of screenshots) {
+        if (event.screenshot) {
+            const imagePath = path.join(sessionDir, event.screenshot);
+            if (await fs.pathExists(imagePath)) {
+                const imageBuffer = await fs.readFile(imagePath);
+                imageMessages.push({
+                    type: "image_url",
+                    image_url: {
+                        url: `data:image/png;base64,${imageBuffer.toString('base64')}`,
+                    },
+                });
+            }
+        }
+    }
+
+    const prompt = `You are a clear, human-sounding narrator for a product demo video. Your script will be used for text-to-speech generation.
+    
+    Here is the timeline of events from the recording:
+    **TIMELINE_JSON:**
+    ${timelineJson}
+
+    Here are some screenshots from key moments:
+    **SCREENSHOTS:**
+    (Attached in message)
+
+    **GOAL:**
+    Create a narration script of 300 words or less.
+    - Narrate in the first-person (e.g., "First, I'll go to the homepage...").
+    - Start each line with the timestamp in [mm:ss] format, based on the timeline.
+    - Do not add any greetings, intro, or sign-off. Just the narration.
+    - Never mention "screenshot saved", file paths, or technical details.
+
+    Produce only the plain-text narration.
+    `;
+    
+    const response = await this.getOpenAIClient().chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: prompt },
+              ...imageMessages,
+            ],
+          },
+        ],
+      });
+
+      return response.choices[0].message.content || "";
+  }
+
+  async synthesizeAudio(text: string, outputPath: string): Promise<string> {
+    const speech = await this.getOpenAIClient().audio.speech.create({
+        model: 'tts-1-hd',
+        input: text,
+        voice: 'alloy',
+        response_format: 'mp3'
+      });
+    
+    const buffer = Buffer.from(await speech.arrayBuffer());
+    await fs.writeFile(outputPath, buffer);
+    return outputPath;
   }
 
   async generateNarrationScript(testSteps: string[], style: string = "professional"): Promise<string> {

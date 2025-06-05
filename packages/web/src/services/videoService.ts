@@ -200,6 +200,44 @@ export class VideoService {
       });
     });
   }
+
+  async convertVideo(videoPath: string): Promise<string> {
+    const outputDir = path.dirname(videoPath);
+    const outputName = `recording.mp4`;
+    const outputPath = path.join(outputDir, outputName);
+
+    const ffmpegArgs = [
+        '-i', videoPath,
+        '-c:v', 'libx264',
+        '-crf', '23',
+        '-pix_fmt', 'yuv420p',
+        outputPath
+    ];
+
+    await this.runFFmpeg(ffmpegArgs);
+    return outputPath;
+  }
+
+  async muxVideoAndAudio(videoPath: string, audioPath: string, sessionId: string): Promise<string> {
+    const outputDir = path.join(process.cwd(), "uploads", "final_videos");
+    if (!fs.existsSync(outputDir)) {
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
+    const outputName = `final_${sessionId}_${Date.now()}.mp4`;
+    const outputPath = path.join(outputDir, outputName);
+
+    const ffmpegArgs = [
+        '-i', videoPath,
+        '-i', audioPath,
+        '-c:v', 'copy',
+        '-c:a', 'aac',
+        '-shortest',
+        outputPath
+    ];
+
+    await this.runFFmpeg(ffmpegArgs);
+    return outputPath;
+  }
 }
 
 export const videoService = new VideoService();

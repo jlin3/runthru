@@ -1,10 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import OpenAI from "openai";
 import { spawn } from "child_process";
-
-export const config = { api: { bodyParser: false } };
-
-const openai = new OpenAI();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
@@ -16,28 +11,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
 
-  const chunks: Buffer[] = [];
-  for await (const chunk of req as any) {
-    chunks.push(Buffer.from(chunk as any));
-  }
-  const audioBuffer = Buffer.concat(chunks);
+  const { testDescription, prLink, isConnectedToGithub } = req.body;
 
-  // Send ack event so client knows upload finished
-  res.write(JSON.stringify({ event: "upload_complete" }) + "\n");
+  // Send ack event so client knows request received
+  res.write(JSON.stringify({ event: "request_received" }) + "\n");
 
-  // Speech-to-text
-  // @ts-ignore typing mismatch
-  const stt = await openai.audio.transcriptions.create({
-    model: "whisper-1",
-    file: audioBuffer as any,
-  });
-
-  res.write(JSON.stringify({ event: "stt_complete", text: stt.text }) + "\n");
-
-  // Spawn agent process
+  // Spawn agent process with test description
   const child = spawn(
     "pnpm",
-    ["--filter", "@runthru/agent", "exec", "ts-node", "src/index.ts", stt.text],
+    ["--filter", "@runthru/agent", "exec", "ts-node", "src/index.ts", testDescription || "Demo test"],
     {
       cwd: process.cwd(),
       env: process.env,
@@ -53,18 +35,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
 
   child.on("close", async () => {
-    // After agent finishes we need to build reply audio
-    // For simplicity, parse lastOutput from agent log maybe not needed
-    const replyText = "Your demo is ready";
-    // @ts-ignore typing mismatch
-    const speech = await openai.audio.speech.create({
-      model: "tts-1",
-      voice: "alloy",
-      input: replyText,
-    } as any);
-
     res.write(
-      JSON.stringify({ event: "tts_complete", reply: speech.url, video: null }) + "\n"
+      JSON.stringify({ event: "pipeline_complete" }) + "\n"
     );
 
     res.end();

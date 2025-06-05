@@ -23,12 +23,12 @@ async function main() {
 
   // 3. Metadata Generation
   console.log(JSON.stringify({ event: "handoff_start", agent: "MetadataAgent" }));
-  const metadata = await run(metadataAgent, "Analyze recording");
+  const metadata = await run(metadataAgent, "Use generate_metadata tool to analyze the recording data");
   console.log(JSON.stringify({ event: "handoff_end", agent: "MetadataAgent" }));
 
   // 4. Voiceover Generation
   console.log(JSON.stringify({ event: "handoff_start", agent: "VoiceoverAgent" }));
-  const voiceover = await run(voiceoverAgent, "Create narration");
+  const voiceover = await run(voiceoverAgent, "Use generate_voiceover tool to create narration from metadata");
   console.log(JSON.stringify({ event: "handoff_end", agent: "VoiceoverAgent" }));
 
   // 5. Demo Video Creation

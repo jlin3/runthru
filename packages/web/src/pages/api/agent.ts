@@ -1,12 +1,19 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { spawn } from "child_process";
 
-const OPENAI_API_KEY = "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";
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     return res.status(405).end("Method Not Allowed");
+  }
+
+  // Check if API key is available
+  if (!OPENAI_API_KEY) {
+    return res.status(500).json({ 
+      error: "OPENAI_API_KEY environment variable is not set" 
+    });
   }
 
   res.setHeader("Content-Type", "application/x-ndjson");
@@ -18,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Send ack event so client knows request received
   res.write(JSON.stringify({ event: "request_received" }) + "\n");
 
-  // Spawn agent process with test description and hardcoded OpenAI key
+  // Spawn agent process with test description and OpenAI key from environment
   const child = spawn(
     "pnpm",
     ["--filter", "@runthru/agent", "exec", "tsx", "src/index.ts", testDescription || "Demo test"],

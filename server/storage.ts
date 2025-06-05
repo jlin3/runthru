@@ -1,13 +1,8 @@
-import { recordings, users, type Recording, type InsertRecording, type User, type InsertUser } from "@shared/schema";
+import { recordings, type Recording, type InsertRecording } from "@shared/schema";
 import { gcpStorageService } from "./services/gcpStorageService";
 import fs from "fs";
 
 export interface IStorage {
-  // User methods
-  getUser(id: number): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  
   // Recording methods
   getRecording(id: number): Promise<Recording | undefined>;
   getRecordings(): Promise<Recording[]>;
@@ -22,33 +17,12 @@ export interface IStorage {
 }
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
   private recordings: Map<number, Recording>;
-  private currentUserId: number;
   private currentRecordingId: number;
 
   constructor() {
-    this.users = new Map();
     this.recordings = new Map();
-    this.currentUserId = 1;
     this.currentRecordingId = 1;
-  }
-
-  async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
-  }
-
-  async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user: User = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
   }
 
   async getRecording(id: number): Promise<Recording | undefined> {
@@ -65,6 +39,7 @@ export class MemStorage implements IStorage {
     const id = this.currentRecordingId++;
     const recording: Recording = {
       id,
+      userId: insertRecording.userId || 'anonymous', // For in-memory storage, use provided userId or default
       title: insertRecording.title,
       description: insertRecording.description ?? null,
       targetUrl: insertRecording.targetUrl,

@@ -1,5 +1,5 @@
 import { IStorage, MemStorage } from '../storage';
-import { Recording, InsertRecording, User, InsertUser } from '@shared/schema';
+import { Recording, InsertRecording, AuthUser } from '@shared/schema';
 import fs from 'fs';
 import path from 'path';
 
@@ -12,8 +12,8 @@ class UnifiedStorageService implements IStorage {
     this.fallbackStorage = new MemStorage();
     this.primaryStorage = this.fallbackStorage; // Initialize with fallback
     
-    // Try to initialize Supabase
-    this.initializeStorage();
+    // Delay initialization to allow environment variables to load
+    setTimeout(() => this.initializeStorage(), 100);
   }
 
   private async initializeStorage() {
@@ -52,18 +52,8 @@ class UnifiedStorageService implements IStorage {
     }
   }
 
-  // User methods
-  async getUser(id: number): Promise<User | undefined> {
-    return this.primaryStorage.getUser(id);
-  }
-
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    return this.primaryStorage.getUserByUsername(username);
-  }
-
-  async createUser(user: InsertUser): Promise<User> {
-    return this.primaryStorage.createUser(user);
-  }
+  // User authentication is handled by Supabase Auth directly
+  // No need for user methods in storage - use supabaseService auth methods instead
 
   // Recording methods
   async getRecording(id: number): Promise<Recording | undefined> {

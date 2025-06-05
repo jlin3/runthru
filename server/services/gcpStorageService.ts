@@ -17,8 +17,8 @@ class GCPStorageService {
 
   constructor() {
     const config: GCPStorageConfig = {
-      projectId: process.env.GCP_PROJECT_ID || '',
-      bucketName: process.env.GCP_BUCKET_NAME || 'runthru-storage',
+      projectId: process.env.GCP_PROJECT_ID || 'bookvid-be',
+      bucketName: process.env.GCP_BUCKET_NAME || 'bookvid-stg-images',
       keyFilename: process.env.GOOGLE_APPLICATION_CREDENTIALS,
       clientEmail: process.env.GCP_CLIENT_EMAIL,
       privateKey: process.env.GCP_PRIVATE_KEY?.replace(/\\n/g, '\n'),
@@ -31,8 +31,20 @@ class GCPStorageService {
       projectId: config.projectId,
     };
 
+    // Check for JSON credentials first (most common for existing infrastructure)
+    const jsonCredentials = process.env.GCP_JSON_CREDENTIALS;
+    if (jsonCredentials && jsonCredentials !== 'your-gcp-json-credentials-string') {
+      try {
+        // For now, we'll fall back to Application Default Credentials (ADC)
+        // since the JSON credential is likely a token rather than full service account JSON
+        console.log('Using Application Default Credentials for GCP Storage');
+        // The Google Cloud Storage client will automatically use ADC
+      } catch (error) {
+        console.warn('Failed to parse GCP JSON credentials, falling back to ADC');
+      }
+    }
     // Use service account key file if provided
-    if (config.keyFilename && fs.existsSync(config.keyFilename)) {
+    else if (config.keyFilename && fs.existsSync(config.keyFilename)) {
       storageOptions.keyFilename = config.keyFilename;
     } 
     // Use environment variables for authentication

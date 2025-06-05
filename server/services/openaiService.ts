@@ -2,11 +2,21 @@ import OpenAI from "openai";
 import * as fs from "fs";
 import * as path from "path";
 
-const openai = new OpenAI({ 
-  apiKey: process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_ENV_VAR || "default_key"
-});
-
 export class OpenAIService {
+  private openai: OpenAI | null = null;
+
+  private getOpenAIClient(): OpenAI {
+    if (!this.openai) {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) {
+        console.error('OPENAI_API_KEY not found in environment variables');
+        throw new Error('OpenAI API key not configured');
+      }
+      console.log('✅ Initializing OpenAI with API key');
+      this.openai = new OpenAI({ apiKey });
+    }
+    return this.openai;
+  }
   async generateTestSteps(description: string, targetUrl: string): Promise<string[]> {
     try {
       const prompt = `You are an expert QA automation engineer. Given the following test description and target URL, generate a detailed step-by-step test plan that can be executed by Playwright automation.
@@ -28,7 +38,7 @@ Example format:
   ]
 }`;
 
-      const response = await openai.chat.completions.create({
+      const response = await this.getOpenAIClient().chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [{ role: "user", content: prompt }],
         response_format: { type: "json_object" },
@@ -60,7 +70,7 @@ Create a script that:
 
 Provide only the narration text, no formatting or stage directions.`;
 
-      const response = await openai.chat.completions.create({
+      const response = await this.getOpenAIClient().chat.completions.create({
         model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
         messages: [{ role: "user", content: prompt }],
       });
@@ -74,7 +84,7 @@ Provide only the narration text, no formatting or stage directions.`;
 
   async generateSpeech(text: string, voice: string = "alloy"): Promise<string> {
     try {
-      const response = await openai.audio.speech.create({
+      const response = await this.getOpenAIClient().audio.speech.create({
         model: "tts-1",
         voice: voice as any,
         input: text,

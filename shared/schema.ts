@@ -2,14 +2,18 @@ import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizz
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-});
+// We use Supabase's built-in auth.users table instead of a custom users table
+// Define the auth user type for TypeScript
+export type AuthUser = {
+  id: string;
+  email?: string;
+  created_at: string;
+  updated_at: string;
+};
 
 export const recordings = pgTable("recordings", {
   id: serial("id").primaryKey(),
+  userId: text("user_id"), // Optional - References auth.users(id)
   title: text("title").notNull(),
   description: text("description"),
   targetUrl: text("target_url").notNull(),
@@ -49,12 +53,8 @@ export const insertRecordingSchema = createInsertSchema(recordings).omit({
   completedAt: true,
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
-
 export type InsertRecording = z.infer<typeof insertRecordingSchema>;
 export type Recording = typeof recordings.$inferSelect;
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+
+// For user authentication, we use Supabase's built-in auth system
+// The AuthUser type is defined above for TypeScript typing

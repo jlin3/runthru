@@ -1,0 +1,20 @@
+runtime: nodejs18
+
+# Use standard environment (more stable and commonly supported)
+env: standard
+
+# Configure automatic scaling for standard environment
+automatic_scaling:
+  min_instances: 1
+  max_instances: 10
+  target_cpu_utilization: 0.6
+
+# Environment variables (set these via gcloud command for security)
+env_variables:
+  NODE_ENV: production
+  # Set sensitive environment variables via gcloud command:
+  # gcloud app deploy --set-env-vars OPENAI_API_KEY=your_key,SUPABASE_URL=your_url,...
+
+# Build configuration
+build_env_variables:
+  NODE_ENV: production 

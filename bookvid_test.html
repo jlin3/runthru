@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bookvid Test Recording</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, textarea { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; }
+        textarea { height: 120px; resize: vertical; }
+        button { background: #007bff; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Bookvid Test Recording Creator</h1>
+    
+    <form id="testForm">
+        <div class="form-group">
+            <label for="targetUrl">Website URL:</label>
+            <input type="url" id="targetUrl" value="https://stg.bookvid.com/" required>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Test Description:</label>
+            <textarea id="description" required>Test the Bookvid marketplace booking flow:
+1. Navigate to stg.bookvid.com
+2. Click on 'Marketplace' in the navigation
+3. Browse profiles and locate Jesse Linson in the Startups,AI,Analytics category
+4. Click on Jesse Linson's profile to view details
+5. Click the 'Book' or scheduling button to start booking process
+6. Fill out the booking form with:
+   - Name: Jesse Linson
+   - Email: jesselinson@gmail.com
+   - Payment info: Card 42424242424242, Expiry 02/28, CVV 111
+7. Complete the booking process
+8. Verify booking confirmation appears</textarea>
+        </div>
+        
+        <button type="submit">Generate Test Recording</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <div class="info" style="margin-top: 30px;">
+        <h3>Manual Steps to Create Recording:</h3>
+        <ol>
+            <li>Start your RunThru server: <code>npm run dev</code></li>
+            <li>Open <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></li>
+            <li>In the dashboard, enter the URL: <strong>https://stg.bookvid.com/</strong></li>
+            <li>Paste the test description from the textarea above</li>
+            <li>Click "Generate Recording" to start the process</li>
+        </ol>
+        
+        <h3>Expected Test Flow:</h3>
+        <ul>
+            <li>Browser opens to stg.bookvid.com</li>
+            <li>Clicks "Marketplace" in navigation</li>
+            <li>Finds Jesse Linson profile (Startups,AI,Analytics category)</li>
+            <li>Clicks on his profile to view details</li>
+            <li>Initiates booking process</li>
+            <li>Fills form with provided test data</li>
+            <li>Completes booking and verifies confirmation</li>
+        </ul>
+    </div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = '<div class="info">Generating test recording...</div>';
+            
+            const targetUrl = document.getElementById('targetUrl').value;
+            const description = document.getElementById('description').value;
+            
+            try {
+                // Step 1: Generate test steps
+                const stepsResponse = await fetch('http://localhost:3000/api/recordings/generate-steps', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        description: description,
+                        targetUrl: targetUrl
+                    })
+                });
+                
+                if (!stepsResponse.ok) {
+                    throw new Error('Server not responding. Make sure RunThru server is running on port 3000.');
+                }
+                
+                const stepsData = await stepsResponse.json();
+                
+                // Step 2: Create recording
+                const recordingData = {
+                    title: 'Bookvid Marketplace Booking Test',
+                    description: description,
+                    targetUrl: targetUrl,
+                    testSteps: stepsData.steps,
+                    browserConfig: {
+                        browser: 'Chromium',
+                        viewport: '1920x1080',
+                        headless: false,
+                        recordingQuality: 'High (1080p)'
+                    },
+                    narrationConfig: {
+                        provider: 'OpenAI',
+                        voice: 'alloy',
+                        style: 'Professional & Clear',
+                        speed: 1.0,
+                        autoGenerate: true
+                    },
+                    videoConfig: {
+                        format: 'MP4 (H.264)',
+                        avatarPosition: 'Bottom Right',
+                        avatarStyle: 'AI Assistant',
+                        avatarSize: 100,
+                        showAvatar: true
+                    }
+                };
+                
+                const recordingResponse = await fetch('http://localhost:3000/api/recordings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(recordingData)
+                });
+                
+                const recording = await recordingResponse.json();
+                
+                // Step 3: Start recording
+                const startResponse = await fetch(`http://localhost:3000/api/recordings/${recording.id}/start`, {
+                    method: 'POST'
+                });
+                
+                if (startResponse.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="success">
+                            <h3>Recording Started Successfully!</h3>
+                            <p><strong>Recording ID:</strong> ${recording.id}</p>
+                            <p><strong>Status:</strong> Recording in progress</p>
+                            <p>You can monitor the progress at: <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></p>
+                            <p>The recording will automatically execute the test steps and create a video with AI narration.</p>
+                        </div>
+                    `;
+                } else {
+                    throw new Error('Failed to start recording');
+                }
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="error">
+                        <h3>Error:</h3>
+                        <p>${error.message}</p>
+                        <p>Make sure your RunThru server is running with: <code>npm run dev</code></p>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html> 

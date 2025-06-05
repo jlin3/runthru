@@ -3,6 +3,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer } from "ws";
 import { storage } from "./storage";
+import { unifiedStorage } from "./services/unifiedStorageService";
 import { insertRecordingSchema, type Recording } from "@shared/schema";
 import { openaiService } from "./services/openaiService";
 import { elevenlabsService } from "./services/elevenlabsService";
@@ -53,10 +54,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
   };
 
+  // Get storage configuration info
+  app.get("/api/storage/info", async (req, res) => {
+    try {
+      const storageInfo = await unifiedStorage.getStorageInfo();
+      res.json({
+        database: storageInfo.database,
+        fileStorage: storageInfo.fileStorage,
+        usingSupabase: unifiedStorage.isUsingSupabase(),
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error getting storage info:", error);
+      res.status(500).json({ 
+        message: "Failed to get storage info",
+        error: error instanceof Error ? error.message : "Unknown error"
+      });
+    }
+  });
+
   // Get all recordings
   app.get("/api/recordings", async (req, res) => {
     try {
-      const recordings = await storage.getRecordings();
+      const recordings = await unifiedStorage.getRecordings();
       res.json(recordings);
     } catch (error) {
       console.error("Error fetching recordings:", error);
@@ -75,7 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid recording ID" });
       }
 
-      const recording = await storage.getRecording(id);
+      const recording = await unifiedStorage.getRecording(id);
       if (!recording) {
         return res.status(404).json({ message: "Recording not found" });
       }
@@ -94,7 +114,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/recordings", async (req, res) => {
     try {
       const validatedData = insertRecordingSchema.parse(req.body);
-      const recording = await storage.createRecording(validatedData);
+      const recording = await unifiedStorage.createRecording(validatedData);
       
       res.status(201).json(recording);
     } catch (error) {
@@ -148,7 +168,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid recording ID" });
       }
 
-      const recording = await storage.getRecording(id);
+      const recording = await unifiedStorage.getRecording(id);
       if (!recording) {
         return res.status(404).json({ message: "Recording not found" });
       }
@@ -160,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Update status to recording
-      await storage.updateRecording(id, { 
+      await unifiedStorage.updateRecording(id, { 
         status: "recording",
         currentStep: "Browser Setup"
       });
@@ -168,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Start the recording process asynchronously
       executeRecording(id, recording, broadcast).catch((error) => {
         console.error("Recording execution failed:", error);
-        storage.updateRecording(id, { 
+        unifiedStorage.updateRecording(id, { 
           status: "failed",
           currentStep: `Error: ${error.message}`
         });
@@ -201,7 +221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await playwrightService.stopRecording();
       
       // Update status
-      await storage.updateRecording(id, { 
+      await unifiedStorage.updateRecording(id, { 
         status: "failed",
         currentStep: "Stopped by user"
       });
@@ -222,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Upload avatar image
-  app.post("/api/upload/avatar", upload.single("avatar"), (req, res) => {
+  app.post("/api/upload/avatar", upload.single("avatar"), async (req, res) => {
     try {
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -233,10 +253,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       fs.renameSync(req.file.path, newPath);
       
+      // Upload to cloud storage if configured
+      const cloudPath = await unifiedStorage.uploadAvatarToCloud(newPath);
+      
       res.json({ 
         message: "Avatar uploaded successfully",
         fileName,
-        path: `/uploads/${fileName}`
+        path: cloudPath.startsWith('https://') ? cloudPath : `/uploads/${fileName}`,
+        cloudUrl: cloudPath.startsWith('https://') ? cloudPath : undefined
       });
     } catch (error) {
       console.error("Error uploading avatar:", error);
@@ -258,11 +282,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid recording ID" });
       }
 
-      const recording = await storage.getRecording(id);
+      const recording = await unifiedStorage.getRecording(id);
       if (!recording || !recording.videoPath) {
         return res.status(404).json({ message: "Recording video not found" });
       }
 
+      // If it's a cloud URL, redirect to the cloud storage
+      if (recording.videoPath.startsWith('https://')) {
+        return res.redirect(recording.videoPath);
+      }
+
+      // Handle local files
       if (!fs.existsSync(recording.videoPath)) {
         return res.status(404).json({ message: "Video file not found on disk" });
       }
@@ -290,12 +320,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Invalid recording ID" });
       }
 
-      const recording = await storage.getRecording(id);
+      const recording = await unifiedStorage.getRecording(id);
       if (recording?.videoPath && fs.existsSync(recording.videoPath)) {
         fs.unlinkSync(recording.videoPath);
       }
 
-      const deleted = await storage.deleteRecording(id);
+      const deleted = await unifiedStorage.deleteRecording(id);
       if (!deleted) {
         return res.status(404).json({ message: "Recording not found" });
       }
@@ -534,7 +564,7 @@ async function executeRecording(
       progress: 10
     });
 
-    await storage.updateRecording(id, { 
+    await unifiedStorage.updateRecording(id, { 
       currentStep: "Browser Setup",
       progress: 10
     });
@@ -552,7 +582,7 @@ async function executeRecording(
             step,
             progress
           });
-          storage.updateRecording(id, { 
+          unifiedStorage.updateRecording(id, { 
             currentStep: step,
             progress
           });
@@ -567,7 +597,7 @@ async function executeRecording(
           step,
           progress
         });
-        storage.updateRecording(id, { 
+        unifiedStorage.updateRecording(id, { 
           currentStep: step,
           progress
         });
@@ -582,7 +612,7 @@ async function executeRecording(
       progress: 70
     });
 
-    await storage.updateRecording(id, { 
+    await unifiedStorage.updateRecording(id, { 
       currentStep: "Generating Narration",
       progress: 70
     });
@@ -605,7 +635,7 @@ async function executeRecording(
       progress: 85
     });
 
-    await storage.updateRecording(id, { 
+    await unifiedStorage.updateRecording(id, { 
       currentStep: "Video Composition",
       progress: 85
     });
@@ -616,15 +646,30 @@ async function executeRecording(
       recording.videoConfig
     );
 
+    // Upload video to cloud storage if configured
+    broadcast({ 
+      type: "recording_progress", 
+      recordingId: id, 
+      step: "Uploading to Cloud Storage",
+      progress: 95
+    });
+
+    await unifiedStorage.updateRecording(id, { 
+      currentStep: "Uploading to Cloud Storage",
+      progress: 95
+    });
+
+    const cloudVideoPath = await unifiedStorage.uploadVideoToCloud(finalVideoPath, id);
+
     // Get video duration
     const duration = await videoService.getVideoDuration(finalVideoPath);
 
     // Complete recording
-    await storage.updateRecording(id, { 
+    await unifiedStorage.updateRecording(id, { 
       status: "completed",
       currentStep: "Completed",
       progress: 100,
-      videoPath: finalVideoPath,
+      videoPath: cloudVideoPath,
       duration,
       completedAt: new Date()
     });
@@ -638,7 +683,7 @@ async function executeRecording(
 
   } catch (error) {
     console.error("Recording execution error:", error);
-    await storage.updateRecording(id, { 
+    await unifiedStorage.updateRecording(id, { 
       status: "failed",
       currentStep: `Error: ${error instanceof Error ? error.message : "Unknown error"}`
     });

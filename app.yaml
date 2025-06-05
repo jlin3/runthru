@@ -1,0 +1,54 @@
+runtime: nodejs20
+
+# Use flexible environment to support long-running processes and system dependencies
+env: flexible
+
+# Configure instance resources
+automatic_scaling:
+  min_num_instances: 1
+  max_num_instances: 10
+  cool_down_period_sec: 120
+  target_cpu_utilization: 0.6
+
+# Instance configuration
+resources:
+  cpu: 1
+  memory_gb: 2
+  disk_size_gb: 10
+
+# Network configuration
+network:
+  session_affinity: true
+
+# Environment variables (you'll set these via gcloud command or console)
+env_variables:
+  NODE_ENV: production
+  PORT: 8080
+  # Add your environment variables here or use gcloud to set them securely
+  # OPENAI_API_KEY: your_key_here
+  # SUPABASE_URL: your_supabase_url
+  # SUPABASE_SERVICE_KEY: your_service_key
+  # GCP_PROJECT_ID: your_project_id
+  # GCP_BUCKET_NAME: your_bucket_name
+
+# Build configuration
+build_env_variables:
+  NODE_ENV: production
+
+# Health check configuration
+readiness_check:
+  path: "/api/storage/info"
+  check_interval_sec: 5
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+liveness_check:
+  path: "/api/storage/info"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
+# Configure the startup command
+entrypoint: npm start 

@@ -1,0 +1,25 @@
+{
+  "name": "@runthru/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.0.2",
+    "@openai/agents-realtime": "^0.0.2",
+    "dotenv": "^16.5.0",
+    "playwright": "^1.52.0",
+    "ffmpeg-static": "^5.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "ts-node": "^10.9.2",
+    "nodemon": "^3.1.0",
+    "@types/node": "^20.16.11"
+  }
+} 

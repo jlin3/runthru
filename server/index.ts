@@ -6,6 +6,8 @@ dotenv.config();
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { supabaseService } from "./services/supabaseService.js";
+import { simpleAgentService } from "./services/simpleAgentService.js";
 
 const app = express();
 app.use(express.json());
@@ -39,6 +41,75 @@ app.use((req, res, next) => {
   });
 
   next();
+});
+
+// Agent routes
+app.post('/api/agent/run', async (req, res) => {
+  try {
+    const { instruction } = req.body;
+    
+    if (!instruction) {
+      return res.status(400).json({ error: 'Instruction is required' });
+    }
+
+    console.log(`🤖 Running agent with instruction: ${instruction}`);
+    const result = await simpleAgentService.run(instruction);
+    
+    res.json({ 
+      success: true, 
+      result,
+      instruction 
+    });
+  } catch (error: any) {
+    console.error('Agent route error:', error);
+    res.status(500).json({ 
+      error: 'Agent execution failed',
+      details: error.message 
+    });
+  }
+});
+
+app.post('/api/agent/demo', async (req, res) => {
+  try {
+    const { url, testDescription } = req.body;
+    
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    const instruction = testDescription 
+      ? `Create and run a demo test for "${testDescription}" on ${url}. Start recording, analyze the page, generate a test plan, execute some basic interactions, take screenshots, and stop recording.`
+      : `Create a demo recording of ${url}. Start recording, analyze the page structure, interact with key elements, take screenshots, and stop recording.`;
+
+    console.log(`🎬 Running demo agent for: ${url}`);
+    const result = await simpleAgentService.run(instruction);
+    
+    res.json({ 
+      success: true, 
+      result,
+      url,
+      testDescription: testDescription || 'Basic page exploration'
+    });
+  } catch (error: any) {
+    console.error('Demo agent error:', error);
+    res.status(500).json({ 
+      error: 'Demo execution failed',
+      details: error.message 
+    });
+  }
+});
+
+app.post('/api/agent/cleanup', async (req, res) => {
+  try {
+    await simpleAgentService.cleanup();
+    res.json({ success: true, message: 'Agent cleaned up successfully' });
+  } catch (error: any) {
+    console.error('Agent cleanup error:', error);
+    res.status(500).json({ 
+      error: 'Cleanup failed',
+      details: error.message 
+    });
+  }
 });
 
 (async () => {

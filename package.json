@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
+  "workspaces": ["packages/*"],
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "npm run build:backend",
@@ -14,7 +15,8 @@
     "gcp:deploy:prod": "npm run gcp:build && gcloud app deploy --promote --stop-previous-version",
     "gcp:logs": "gcloud app logs tail -s default",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "test-agent": "tsx scripts/test-agent.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",
@@ -87,8 +89,9 @@
     "vaul": "^1.1.2",
     "wouter": "^3.3.5",
     "ws": "^8.18.2",
-    "zod": "^3.24.2",
-    "zod-validation-error": "^3.4.0"
+    "zod": "^3.23.8",
+    "zod-validation-error": "^3.4.0",
+    "@octokit/rest": "^20.0.0"
   },
   "devDependencies": {
     "@replit/vite-plugin-cartographer": "^0.2.7",

@@ -7,7 +7,63 @@ RunThru is a full-stack application that needs to be deployed as two separate se
 - **Frontend**: React app (can be deployed to Vercel, Netlify, etc.)
 - **Backend**: Node.js Express server with Playwright (needs Node.js hosting)
 
-## Option 1: Frontend (Vercel) + Backend (Render/Railway)
+## Option 1: Frontend (Vercel) + Backend (Google App Engine) 🌟 RECOMMENDED
+
+Since you're already using Google Cloud Platform for storage, deploying to Google App Engine provides the best integration and performance.
+
+### Step 1: Deploy Backend to Google App Engine
+
+#### Prerequisites
+1. **Install gcloud CLI**: [Download here](https://cloud.google.com/sdk/docs/install)
+2. **Authenticate**: `gcloud auth login`
+3. **Set your project**: `gcloud config set project YOUR_GCP_PROJECT_ID`
+
+#### Quick Deployment
+```bash
+# Use the provided deployment script
+./deploy-gae.sh
+```
+
+#### Manual Deployment Steps
+1. **Build the backend**: `npm run build:backend`
+2. **Deploy to App Engine**: `gcloud app deploy`
+3. **Set environment variables** (choose one method):
+
+   **Method A: Via gcloud command**
+   ```bash
+   gcloud app deploy --set-env-vars \
+     OPENAI_API_KEY=your_openai_key,\
+     SUPABASE_URL=your_supabase_url,\
+     SUPABASE_SERVICE_KEY=your_service_key,\
+     GCP_PROJECT_ID=your_project_id,\
+     GCP_BUCKET_NAME=your_bucket_name
+   ```
+
+   **Method B: Via Google Cloud Console**
+   - Go to [App Engine Settings](https://console.cloud.google.com/appengine/settings)
+   - Click "Environment Variables" 
+   - Add your variables from `.env`
+
+4. **Get your App Engine URL**: `gcloud app describe --format="value(defaultHostname)"`
+
+### Step 2: Deploy Frontend to Vercel
+
+1. **Create Vercel Account**: Go to [vercel.com](https://vercel.com) and sign up
+2. **Import Project**: Connect your GitHub repo
+3. **Configure Build Settings**:
+   - **Build Command**: `npm run build:frontend`
+   - **Output Directory**: `dist/public`
+   - **Install Command**: `npm install`
+
+4. **Set Environment Variables** in Vercel dashboard:
+   ```
+   VITE_API_BASE_URL=https://your-project-id.appspot.com
+   VITE_WS_BASE_URL=wss://your-project-id.appspot.com
+   ```
+
+5. **Deploy**: Vercel will build and deploy your frontend
+
+## Option 2: Frontend (Vercel) + Backend (Render/Railway)
 
 ### Step 1: Deploy Backend to Render.com
 
@@ -120,9 +176,33 @@ VITE_WS_BASE_URL=wss://your-backend-url.com
 
 ## Testing Your Deployment
 
-1. **Backend Health Check**: Visit `https://your-backend-url/api/storage/info`
+1. **Backend Health Check**: Visit `https://your-project-id.appspot.com/api/storage/info` (GAE) or `https://your-backend-url/api/storage/info`
 2. **Frontend**: Visit your Vercel URL and test creating a recording
 3. **WebSocket**: Check real-time updates work during recording
+
+## Google App Engine Specific Commands
+
+```bash
+# Deploy to GAE
+npm run gcp:deploy
+
+# Build and deploy with promotion (production)
+npm run gcp:deploy:prod
+
+# View logs
+npm run gcp:logs
+# or
+gcloud app logs tail -s default
+
+# Open your app in browser
+gcloud app browse
+
+# View app details
+gcloud app describe
+
+# Update environment variables
+gcloud app deploy --set-env-vars KEY=value,KEY2=value2
+```
 
 ## Troubleshooting
 
@@ -134,6 +214,14 @@ VITE_WS_BASE_URL=wss://your-backend-url.com
 4. **Build Failures**: Check Node.js version compatibility
 
 ### Platform-Specific Notes
+
+**Google App Engine** ⭐:
+- Perfect integration with your existing GCP infrastructure
+- Automatic scaling and load balancing
+- Supports long-running processes and WebSockets
+- Built-in monitoring and logging
+- No cold starts on flexible environment
+- Best choice since you're already using GCP Storage
 
 **Render.com**:
 - Free tier has cold starts (app sleeps after 15min inactivity)

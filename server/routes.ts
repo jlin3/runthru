@@ -33,24 +33,27 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  // Temporarily disable WebSocket to troubleshoot
+  // const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
   // WebSocket connection for real-time updates
-  wss.on("connection", (ws) => {
-    console.log("WebSocket client connected");
-    
-    ws.on("close", () => {
-      console.log("WebSocket client disconnected");
-    });
-  });
+  // wss.on("connection", (ws) => {
+  //   console.log("WebSocket client connected");
+  //   
+  //   ws.on("close", () => {
+  //     console.log("WebSocket client disconnected");
+  //   });
+  // });
 
   // Broadcast updates to all connected clients
   const broadcast = (data: any) => {
-    wss.clients.forEach((client) => {
-      if (client.readyState === 1) { // OPEN
-        client.send(JSON.stringify(data));
-      }
-    });
+    // Temporarily disabled WebSocket broadcasting
+    console.log("Broadcast:", data);
+    // wss.clients.forEach((client) => {
+    //   if (client.readyState === 1) { // OPEN
+    //     client.send(JSON.stringify(data));
+    //   }
+    // });
   };
 
   // Get all recordings
@@ -456,65 +459,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Enhanced WebSocket for voice agent integration
   const voiceClients = new Map<string, any>();
 
-  wss.on("connection", (ws, req) => {
-    const clientId = req.url?.includes('voice') ? `voice-${Date.now()}` : `recording-${Date.now()}`;
-    
-    if (req.url?.includes('voice')) {
-      voiceClients.set(clientId, ws);
-      console.log(`Voice agent client connected: ${clientId}`);
-      
-      ws.on("message", async (data) => {
-        try {
-          const message = JSON.parse(data.toString());
-          
-          switch (message.type) {
-            case 'voice_audio':
-              // Handle incoming audio from client
-              const audioBuffer = Buffer.from(message.audio, 'base64');
-              realtimeVoiceService.sendAudio(audioBuffer.buffer);
-              break;
-              
-            case 'voice_text':
-              // Handle text message to voice agent
-              realtimeVoiceService.sendText(message.text);
-              break;
-              
-            case 'create_session':
-              // Create appropriate voice session
-              switch (message.agentType) {
-                case 'qa-assistant':
-                  await realtimeVoiceService.createQAAssistantSession();
-                  break;
-                case 'narrator':
-                  await realtimeVoiceService.createNarrationAgentSession();
-                  break;
-                case 'test-generator':
-                  await realtimeVoiceService.createTestGeneratorSession();
-                  break;
-              }
-              break;
-          }
-        } catch (error) {
-          console.error("Error handling voice WebSocket message:", error);
-          ws.send(JSON.stringify({ 
-            type: 'error', 
-            error: error instanceof Error ? error.message : "Unknown error" 
-          }));
-        }
-      });
-
-      ws.on("close", () => {
-        voiceClients.delete(clientId);
-        console.log(`Voice agent client disconnected: ${clientId}`);
-      });
-    } else {
-      console.log("WebSocket client connected");
-      
-      ws.on("close", () => {
-        console.log("WebSocket client disconnected");
-      });
-    }
-  });
+  // wss.on("connection", (ws, req) => {
+  //   const clientId = req.url?.includes('voice') ? `voice-${Date.now()}` : `recording-${Date.now()}`;
+  //   
+  //   if (req.url?.includes('voice')) {
+  //     voiceClients.set(clientId, ws);
+  //     console.log(`Voice agent client connected: ${clientId}`);
+  //     
+  //     ws.on("message", async (data) => {
+  //       try {
+  //         const message = JSON.parse(data.toString());
+  //         
+  //         switch (message.type) {
+  //           case 'voice_audio':
+  //             // Handle incoming audio from client
+  //             const audioBuffer = Buffer.from(message.audio, 'base64');
+  //             realtimeVoiceService.sendAudio(audioBuffer.buffer);
+  //             break;
+  //             
+  //           case 'voice_text':
+  //             // Handle text message to voice agent
+  //             realtimeVoiceService.sendText(message.text);
+  //             break;
+  //             
+  //           case 'create_session':
+  //             // Create appropriate voice session
+  //             switch (message.agentType) {
+  //               case 'qa-assistant':
+  //                 await realtimeVoiceService.createQAAssistantSession();
+  //                 break;
+  //               case 'narrator':
+  //                 await realtimeVoiceService.createNarrationAgentSession();
+  //                 break;
+  //               case 'test-generator':
+  //                 await realtimeVoiceService.createTestGeneratorSession();
+  //                 break;
+  //             }
+  //             break;
+  //         }
+  //       } catch (error) {
+  //         console.error("Error handling voice WebSocket message:", error);
+  //         ws.send(JSON.stringify({ 
+  //           type: 'error', 
+  //           error: error instanceof Error ? error.message : "Unknown error" 
+  //         }));
+  //       }
+  //     });
+  //
+  //     ws.on("close", () => {
+  //       voiceClients.delete(clientId);
+  //       console.log(`Voice agent client disconnected: ${clientId}`);
+  //     });
+  //   } else {
+  //     console.log("WebSocket client connected");
+  //     
+  //     ws.on("close", () => {
+  //       console.log("WebSocket client disconnected");
+  //     });
+  //   }
+  // });
 
   return httpServer;
 }
@@ -587,15 +590,28 @@ async function executeRecording(
       progress: 70
     });
 
-    const narrationScript = await openaiService.generateNarrationScript(
-      recording.testSteps,
-      recording.narrationConfig.style
-    );
+    let narrationScript: string;
+    let audioPath: string;
+    
+    try {
+      narrationScript = await openaiService.generateNarrationScript(
+        recording.testSteps,
+        recording.narrationConfig.style
+      );
 
-    const audioPath = await openaiService.generateSpeech(
-      narrationScript,
-      "alloy" // Use valid OpenAI voice
-    );
+      audioPath = await openaiService.generateSpeech(
+        narrationScript,
+        "alloy" // Use valid OpenAI voice
+      );
+    } catch (narrationError) {
+      console.log("OpenAI narration not available, skipping audio generation");
+      
+      // Create a simple fallback narration script
+      narrationScript = `This is a demonstration of the ${recording.title}. The test includes ${recording.testSteps.length} automated steps that verify the functionality of the target application.`;
+      
+      // Skip audio generation and proceed without narration
+      audioPath = "";
+    }
 
     // Step 3: Video Composition
     broadcast({ 

@@ -25,32 +25,57 @@ export class VideoService {
       // Create avatar overlay if enabled
       let ffmpegArgs: string[] = [];
       
+      // Check if we have audio
+      const hasAudio = audioPath && audioPath.length > 0 && fs.existsSync(audioPath);
+      
       if (videoConfig.showAvatar) {
         const avatarPath = await this.createAvatar(videoConfig.avatarStyle, videoConfig.avatarSize);
         const position = this.getAvatarPosition(videoConfig.avatarPosition, videoConfig.avatarSize);
         
-        ffmpegArgs = [
-          '-i', videoPath,
-          '-i', audioPath,
-          '-i', avatarPath,
-          '-filter_complex',
-          `[0:v][2:v] overlay=${position}[v]`,
-          '-map', '[v]',
-          '-map', '1:a',
-          '-c:v', 'libx264',
-          '-c:a', 'aac',
-          '-shortest',
-          outputPath
-        ];
+        if (hasAudio) {
+          ffmpegArgs = [
+            '-i', videoPath,
+            '-i', audioPath,
+            '-i', avatarPath,
+            '-filter_complex',
+            `[0:v][2:v] overlay=${position}[v]`,
+            '-map', '[v]',
+            '-map', '1:a',
+            '-c:v', 'libx264',
+            '-c:a', 'aac',
+            '-shortest',
+            outputPath
+          ];
+        } else {
+          // Video with avatar but no audio
+          ffmpegArgs = [
+            '-i', videoPath,
+            '-i', avatarPath,
+            '-filter_complex',
+            `[0:v][1:v] overlay=${position}[v]`,
+            '-map', '[v]',
+            '-c:v', 'libx264',
+            outputPath
+          ];
+        }
       } else {
-        ffmpegArgs = [
-          '-i', videoPath,
-          '-i', audioPath,
-          '-c:v', 'libx264',
-          '-c:a', 'aac',
-          '-shortest',
-          outputPath
-        ];
+        if (hasAudio) {
+          ffmpegArgs = [
+            '-i', videoPath,
+            '-i', audioPath,
+            '-c:v', 'libx264',
+            '-c:a', 'aac',
+            '-shortest',
+            outputPath
+          ];
+        } else {
+          // Just copy the video without audio
+          ffmpegArgs = [
+            '-i', videoPath,
+            '-c:v', 'libx264',
+            outputPath
+          ];
+        }
       }
 
       await this.runFFmpeg(ffmpegArgs);

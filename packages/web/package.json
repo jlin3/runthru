@@ -1,0 +1,23 @@
+{
+  "name": "@runthru/web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "14.2.4",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "mic-recorder-to-mp3": "^2.2.2",
+    "swr": "^2.2.0",
+    "openai": "^5.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0",
+    "@types/react": "^18.3.11",
+    "@types/node": "^20.16.11"
+  }
+} 

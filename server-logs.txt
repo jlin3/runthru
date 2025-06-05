@@ -1,0 +1,417 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+Re-optimizing dependencies because lockfile has changed
+11:36:48 PM [express] serving on port 3000
+11:36:57 PM [express] POST /api/recordings 201 in 3ms :: {"id":1,"title":"DEBUG: Enhanced Marketplace…
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 1,
+  step: 'Browser Setup',
+  progress: 10
+}
+🎬 Starting Playwright recording with enhanced marketplace booking...
+📊 Playwright Progress: 15% - Launching browser
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 1,
+  step: 'Launching browser',
+  progress: 15
+}
+11:36:57 PM [express] POST /api/recordings/1/start 200 in 3ms :: {"message":"Recording started succes…
+📊 Playwright Progress: 20% - Executing: Navigate to https://stg.bookvid.com/
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 1,
+  step: 'Executing: Navigate to https://stg.bookvid.com/',
+  progress: 20
+}
+📸 Screenshot saved: step-0.png
+📊 Playwright Progress: 36% - Executing: Look for marketplace link
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 1,
+  step: 'Executing: Look for marketplace link',
+  progress: 36
+}
+🔍 Looking for marketplace link...
+✅ Found marketplace with selector: text=Marketplace
+11:37:07 PM [express] GET /api/recordings/1 200 in 0ms :: {"id":1,"title":"DEBUG: Enhanced Marketplac…
+📸 Screenshot saved: step-1.png
+📊 Playwright Progress: 53% - Executing: Click on marketplace
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 1,
+  step: 'Executing: Click on marketplace',
+  progress: 53
+}
+🔍 Looking for marketplace link...
+✅ Found marketplace with selector: text=Marketplace
+✅ Found marketplace with selector: a[href*="marketplace"]
+📸 Screenshot saved: step-2.png
+📊 Playwright Progress: 70% - Finalizing recording
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 1,
+  step: 'Finalizing recording',
+  progress: 70
+}
+📊 Timeline saved: /Users/dhruvmiyani/runthru/uploads/timeline.json
+✅ Playwright recording completed successfully: /Users/dhruvmiyani/runthru/uploads/videos/cc20ca38c6389e4e99b1cba26b137885.webm
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 1,
+  step: 'Generating Narration',
+  progress: 70
+}
+Error generating narration script: RateLimitError: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.
+    at APIError.generate (/Users/dhruvmiyani/runthru/node_modules/openai/src/core/error.ts:96:14)
+    at OpenAI.makeStatusError (/Users/dhruvmiyani/runthru/node_modules/openai/src/client.ts:400:28)
+    at OpenAI.makeRequest (/Users/dhruvmiyani/runthru/node_modules/openai/src/client.ts:616:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async OpenAIService.generateNarrationScript (/Users/dhruvmiyani/runthru/server/services/openaiService.ts:63:24)
+    at async executeRecording (/Users/dhruvmiyani/runthru/server/routes.ts:602:25) {
+  status: 429,
+  headers: Headers {
+    date: 'Thu, 05 Jun 2025 03:37:46 GMT',
+    'content-type': 'application/json; charset=utf-8',
+    'content-length': '337',
+    connection: 'keep-alive',
+    vary: 'Origin',
+    'x-request-id': 'req_1a7c5e9217d6bc4e29e7a8d503626086',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'cf-cache-status': 'DYNAMIC',
+    'set-cookie': '__cf_bm=faGe8gxVfLARoSv2D1Nz72cU_dQWymQ0iZfZr1iCfDo-1749094666-1.0.1.1-Zr4BYhhBY2DXAPaIg0yoRu_KACLNFqcZ75lMvA73yZsfV_bozEwObFr0EjxN0FbzJkOebpcDbikO4xny46pYF_54RATFfJKuS8d8W0YR0M4; path=/; expires=Thu, 05-Jun-25 04:07:46 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=X46aVbSeNb4vGd84.ou_wEW1J57v8DqWTn5POKR0Diw-1749094666500-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'x-content-type-options': 'nosniff',
+    server: 'cloudflare',
+    'cf-ray': '94aca220dc2b8fa2-BOS',
+    'alt-svc': 'h3=":443"; ma=86400'
+  },
+  requestID: 'req_1a7c5e9217d6bc4e29e7a8d503626086',
+  error: {
+    message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.',
+    type: 'insufficient_quota',
+    param: null,
+    code: 'insufficient_quota'
+  },
+  code: 'insufficient_quota',
+  param: null,
+  type: 'insufficient_quota'
+}
+OpenAI narration not available, skipping audio generation
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 1,
+  step: 'Video Composition',
+  progress: 85
+}
+Broadcast: {
+  type: 'recording_completed',
+  recordingId: 1,
+  videoPath: '/Users/dhruvmiyani/runthru/uploads/final_videos/final_1749094666506.mp4',
+  duration: 46
+}
+11:38:01 PM [express] GET /api/recordings/1 200 in 1ms :: {"id":1,"title":"DEBUG: Enhanced Marketplac…
+11:38:25 PM [express] GET /api/recordings/1 200 in 1ms :: {"id":1,"title":"DEBUG: Enhanced Marketplac…
+11:39:09 PM [express] POST /api/recordings 201 in 1ms :: {"id":2,"title":"Complete Bookvid Marketplac…
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Browser Setup',
+  progress: 10
+}
+🎬 Starting Playwright recording with enhanced marketplace booking...
+📊 Playwright Progress: 15% - Launching browser
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Launching browser',
+  progress: 15
+}
+11:39:09 PM [express] POST /api/recordings/2/start 200 in 0ms :: {"message":"Recording started succes…
+📊 Playwright Progress: 20% - Executing: Navigate to https://stg.bookvid.com/
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Navigate to https://stg.bookvid.com/',
+  progress: 20
+}
+11:39:12 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-0.png
+📊 Playwright Progress: 23% - Executing: Wait for the homepage to fully load and examine the layout
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Wait for the homepage to fully load and examine the layout',
+  progress: 23
+}
+11:39:15 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-1.png
+11:39:18 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📊 Playwright Progress: 26% - Executing: Look for and click on the 'Marketplace' navigation link or section
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: "Executing: Look for and click on the 'Marketplace' navigation link or section",
+  progress: 26
+}
+🔍 Looking for marketplace link...
+✅ Found marketplace with selector: text=Marketplace
+11:39:21 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-2.png
+📊 Playwright Progress: 29% - Executing: Wait for the marketplace page to load completely with all profiles
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Wait for the marketplace page to load completely with all profiles',
+  progress: 29
+}
+🔍 Looking for marketplace link...
+✅ Found marketplace with selector: text=Marketplace
+11:39:24 PM [express] GET /api/recordings/2 200 in 2ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:39:27 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:39:30 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:39:33 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:39:36 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:39:39 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:39:42 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:39:45 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:39:48 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:39:51 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+✅ Found marketplace with selector: a[href*="marketplace"]
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+11:39:54 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:39:54 PM [express] GET /api/recordings 200 in 1ms :: [{"id":2,"title":"Complete Bookvid Marketplac…
+📸 Screenshot saved: step-3.png
+11:39:57 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📊 Playwright Progress: 32% - Executing: Browse available creator profiles in the marketplace
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Browse available creator profiles in the marketplace',
+  progress: 32
+}
+🔍 Looking for marketplace link...
+✅ Found marketplace with selector: text=Marketplace
+11:40:00 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:40:03 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:40:06 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:40:09 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:40:12 PM [express] GET /api/recordings/2 200 in 2ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:40:15 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:40:18 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:40:21 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:40:24 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:40:27 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+✅ Found marketplace with selector: a[href*="marketplace"]
+11:40:30 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-4.png
+📊 Playwright Progress: 35% - Executing: Look for Jesse Linson profile specifically in Startups,AI,Analytics category
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Look for Jesse Linson profile specifically in Startups,AI,Analytics category',
+  progress: 35
+}
+🔍 Looking for Jesse Linson profile...
+✅ Found Jesse Linson profile: text=Jesse Linson
+11:40:33 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-5.png
+11:40:36 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📊 Playwright Progress: 38% - Executing: Click on Jesse Linson profile to view his detailed information
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Click on Jesse Linson profile to view his detailed information',
+  progress: 38
+}
+🔍 Looking for Jesse Linson profile...
+✅ Found Jesse Linson profile: text=Jesse Linson
+11:40:39 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-6.png
+📊 Playwright Progress: 41% - Executing: Review Jesse Linson's profile information and available time slots
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: "Executing: Review Jesse Linson's profile information and available time slots",
+  progress: 41
+}
+🔍 Looking for Jesse Linson profile...
+✅ Found Jesse Linson profile: text=Jesse Linson
+11:40:42 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-7.png
+11:40:45 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📊 Playwright Progress: 45% - Executing: Click on 'Book a Session', 'Request Video', or similar booking button
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: "Executing: Click on 'Book a Session', 'Request Video', or similar booking button",
+  progress: 45
+}
+🔍 Looking for booking button...
+✅ Found booking button: button:has-text("Book")
+11:40:48 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-8.png
+📊 Playwright Progress: 48% - Executing: Fill in client information: Name as Jesse Linson
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Fill in client information: Name as Jesse Linson',
+  progress: 48
+}
+🔍 Looking for Jesse Linson profile...
+✅ Found Jesse Linson profile: text=Jesse Linson
+11:40:51 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:40:54 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-9.png
+📊 Playwright Progress: 51% - Executing: Fill in email address: jesselinson@gmail.com
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Fill in email address: jesselinson@gmail.com',
+  progress: 51
+}
+🔍 Looking for Jesse Linson profile...
+✅ Found Jesse Linson profile: text=Jesse Linson
+11:40:57 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-10.png
+11:41:00 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📊 Playwright Progress: 54% - Executing: Enter payment card number: 4242424242424242
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Enter payment card number: 4242424242424242',
+  progress: 54
+}
+💳 Filling payment details...
+📸 Screenshot saved: step-11.png
+11:41:03 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📊 Playwright Progress: 57% - Executing: Enter expiry date: 02/28 and CVV: 111
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Enter expiry date: 02/28 and CVV: 111',
+  progress: 57
+}
+⚠️ Generic execution for: Enter expiry date: 02/28 and CVV: 111
+📸 Screenshot saved: step-12.png
+11:41:06 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📊 Playwright Progress: 60% - Executing: Complete the session booking process and submit the form
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Complete the session booking process and submit the form',
+  progress: 60
+}
+🔍 Looking for booking button...
+✅ Found booking button: button:has-text("Book")
+11:41:09 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-13.png
+📊 Playwright Progress: 63% - Executing: Wait for and verify the booking confirmation appears
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Wait for and verify the booking confirmation appears',
+  progress: 63
+}
+🔍 Looking for booking button...
+✅ Found booking button: button:has-text("Book")
+11:41:12 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📸 Screenshot saved: step-14.png
+11:41:15 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📊 Playwright Progress: 66% - Executing: Capture final confirmation screen
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Executing: Capture final confirmation screen',
+  progress: 66
+}
+⚠️ Generic execution for: Capture final confirmation screen
+📸 Screenshot saved: step-15.png
+11:41:18 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+📊 Playwright Progress: 70% - Finalizing recording
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Finalizing recording',
+  progress: 70
+}
+📊 Timeline saved: /Users/dhruvmiyani/runthru/uploads/timeline.json
+✅ Playwright recording completed successfully: /Users/dhruvmiyani/runthru/uploads/videos/f09af0315dc199c3d8175af24d637af6.webm
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Generating Narration',
+  progress: 70
+}
+Error generating narration script: RateLimitError: 429 You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.
+    at APIError.generate (/Users/dhruvmiyani/runthru/node_modules/openai/src/core/error.ts:96:14)
+    at OpenAI.makeStatusError (/Users/dhruvmiyani/runthru/node_modules/openai/src/client.ts:400:28)
+    at OpenAI.makeRequest (/Users/dhruvmiyani/runthru/node_modules/openai/src/client.ts:616:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async OpenAIService.generateNarrationScript (/Users/dhruvmiyani/runthru/server/services/openaiService.ts:63:24)
+    at async executeRecording (/Users/dhruvmiyani/runthru/server/routes.ts:602:25) {
+  status: 429,
+  headers: Headers {
+    date: 'Thu, 05 Jun 2025 03:41:20 GMT',
+    'content-type': 'application/json; charset=utf-8',
+    'content-length': '337',
+    connection: 'keep-alive',
+    vary: 'Origin',
+    'x-request-id': 'req_423eeb411769d407f4fb9a02d36622bf',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'cf-cache-status': 'DYNAMIC',
+    'set-cookie': '__cf_bm=shALrqxp2wwLE63Uw_wN9QqBnTJ4wFJ3cflvVGNgVPY-1749094880-1.0.1.1-Ty_FMuJy5EapFM05Ys1HXl0q0ioP.HR7IHYrZD_Wp_Aaqy0eTJGl1lkmelzo4uxO4v8OeU.M3mXXGNeL8mk4S_GWBLDHKlOM4BdE1neMaW4; path=/; expires=Thu, 05-Jun-25 04:11:20 GMT; domain=.api.openai.com; HttpOnly; Secure; SameSite=None, _cfuvid=Gb_0B_a7GMRK287Ko7vc.ee7aSxpytOVNWPy4yLu6DY-1749094880542-0.0.1.1-604800000; path=/; domain=.api.openai.com; HttpOnly; Secure; SameSite=None',
+    'x-content-type-options': 'nosniff',
+    server: 'cloudflare',
+    'cf-ray': '94aca75afbadb432-EWR',
+    'alt-svc': 'h3=":443"; ma=86400'
+  },
+  requestID: 'req_423eeb411769d407f4fb9a02d36622bf',
+  error: {
+    message: 'You exceeded your current quota, please check your plan and billing details. For more information on this error, read the docs: https://platform.openai.com/docs/guides/error-codes/api-errors.',
+    type: 'insufficient_quota',
+    param: null,
+    code: 'insufficient_quota'
+  },
+  code: 'insufficient_quota',
+  param: null,
+  type: 'insufficient_quota'
+}
+OpenAI narration not available, skipping audio generation
+Broadcast: {
+  type: 'recording_progress',
+  recordingId: 2,
+  step: 'Video Composition',
+  progress: 85
+}
+11:41:21 PM [express] GET /api/recordings/2 200 in 0ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:41:24 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+Broadcast: {
+  type: 'recording_completed',
+  recordingId: 2,
+  videoPath: '/Users/dhruvmiyani/runthru/uploads/final_videos/final_1749094880545.mp4',
+  duration: 132
+}
+11:41:27 PM [express] GET /api/recordings/2 200 in 1ms :: {"id":2,"title":"Complete Bookvid Marketpla…
+11:44:15 PM [express] GET /api/recordings 200 in 0ms :: [{"id":2,"title":"Complete Bookvid Marketplac…
+11:44:18 PM [express] GET /api/recordings/2/download 200 in 23ms
+1:14:13 AM [express] GET /api/recordings 304 in 3ms :: [{"id":2,"title":"Complete Bookvid Marketplac…
+2:44:20 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+2:47:13 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+2:47:13 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+2:47:20 AM [vite] page reload src/lib/config.ts
+2:47:20 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+2:47:21 AM [express] GET /api/recordings 304 in 1ms :: [{"id":2,"title":"Complete Bookvid Marketplac…
+2:53:18 AM [express] GET /api/recordings 304 in 0ms :: [{"id":2,"title":"Complete Bookvid Marketplac…
+9:13:12 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+9:13:12 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+9:16:00 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+9:16:00 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+9:16:57 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+9:16:57 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+9:26:11 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx
+9:26:11 AM [vite] hmr update /src/App.tsx?v=gg6SiQXxO9FNQMOrTT9R0, /src/index.css?v=gg6SiQXxO9FNQMOrTT9R0, /src/components/SimpleTestRecorder.tsx, /src/components/RecordingHistory.tsx

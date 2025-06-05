@@ -16,6 +16,8 @@ import path from "path";
 import fs from "fs";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { CUAAgentSDK } from './services/cuaAgentSDK';
+import { MetadataVoiceAgent } from './services/metadataVoiceAgent';
 
 // Configure multer for file uploads
 const upload = multer({
@@ -548,6 +550,270 @@ export async function registerRoutes(app: Express): Promise<Server> {
   //     });
   //   }
   // });
+
+  // Add CUA routes after existing routes
+
+  // Create new CUA session
+  app.post('/api/cua/session', async (req, res) => {
+    try {
+      const { objective, title, config } = req.body;
+      
+      if (!objective) {
+        return res.status(400).json({ error: 'Objective is required' });
+      }
+
+      const cua = new CUAAgentSDK();
+      const sessionId = await cua.initializeSession(objective, title);
+
+      res.json({
+        success: true,
+        sessionId,
+        session: cua.getCurrentSession()
+      });
+    } catch (error) {
+      console.error('Error creating CUA session:', error);
+      res.status(500).json({ error: 'Failed to create CUA session' });
+    }
+  });
+
+  // Execute autonomous CUA workflow
+  app.post('/api/cua/execute/:sessionId', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { maxSteps = 10 } = req.body;
+
+      // Load existing session
+      const existingSession = CUAAgentSDK.loadSession(sessionId);
+      if (!existingSession) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      // Create new CUA instance and load the session
+      const cua = new CUAAgentSDK();
+      await cua.initializeSession(existingSession.objective, existingSession.title);
+      
+      // Execute autonomous workflow
+      const completedSession = await cua.executeAutonomousWorkflow(maxSteps);
+
+      res.json({
+        success: true,
+        session: completedSession
+      });
+    } catch (error) {
+      console.error('Error executing CUA workflow:', error);
+      res.status(500).json({ error: 'Failed to execute CUA workflow' });
+    }
+  });
+
+  // Execute single CUA step
+  app.post('/api/cua/step/:sessionId', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const { instruction } = req.body;
+
+      if (!instruction) {
+        return res.status(400).json({ error: 'Instruction is required' });
+      }
+
+      // Load existing session
+      const existingSession = CUAAgentSDK.loadSession(sessionId);
+      if (!existingSession) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      // Create new CUA instance and load the session
+      const cua = new CUAAgentSDK();
+      await cua.initializeSession(existingSession.objective, existingSession.title);
+
+      // Execute the step
+      const step = await cua.executeStep(instruction);
+
+      // Get updated session
+      const updatedSession = cua.getCurrentSession();
+
+      res.json({
+        success: true,
+        step,
+        session: updatedSession
+      });
+    } catch (error) {
+      console.error('Error executing CUA step:', error);
+      res.status(500).json({ error: 'Failed to execute CUA step' });
+    }
+  });
+
+  // Get CUA session details
+  app.get('/api/cua/session/:sessionId', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const session = CUAAgentSDK.loadSession(sessionId);
+
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      res.json({
+        success: true,
+        session
+      });
+    } catch (error) {
+      console.error('Error fetching CUA session:', error);
+      res.status(500).json({ error: 'Failed to fetch CUA session' });
+    }
+  });
+
+  // List all CUA sessions
+  app.get('/api/cua/sessions', async (req, res) => {
+    try {
+      const sessionIds = CUAAgentSDK.listSessions();
+      const sessions = sessionIds.map((id: string) => CUAAgentSDK.loadSession(id)).filter(Boolean);
+
+      res.json({
+        success: true,
+        sessions
+      });
+    } catch (error) {
+      console.error('Error listing CUA sessions:', error);
+      res.status(500).json({ error: 'Failed to list CUA sessions' });
+    }
+  });
+
+  // Get CUA session screenshots
+  app.get('/api/cua/session/:sessionId/screenshots', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const session = CUAAgentSDK.loadSession(sessionId);
+
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      res.json({
+        success: true,
+        screenshots: session.screenshots,
+        count: session.screenshots.length
+      });
+    } catch (error) {
+      console.error('Error fetching CUA screenshots:', error);
+      res.status(500).json({ error: 'Failed to fetch CUA screenshots' });
+    }
+  });
+
+  // Serve CUA session files (screenshots, videos)
+  app.get('/api/cua/files/:sessionId/:filename', (req, res) => {
+    try {
+      const { sessionId, filename } = req.params;
+      const filePath = path.join('uploads', 'cua-sessions', sessionId, filename);
+      
+      if (fs.existsSync(filePath)) {
+        res.sendFile(path.resolve(filePath));
+      } else {
+        res.status(404).json({ error: 'File not found' });
+      }
+    } catch (error) {
+      console.error('Error serving CUA file:', error);
+      res.status(500).json({ error: 'Failed to serve file' });
+    }
+  });
+
+  // Add Metadata Voice-Over Agent routes
+
+  // Generate voice-over script for a session
+  app.post('/api/cua/voiceover/:sessionId', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      const voiceAgent = new MetadataVoiceAgent();
+      const script = await voiceAgent.generateVoiceOverScript(sessionId);
+
+      res.json({
+        success: true,
+        script
+      });
+    } catch (error) {
+      console.error('Error generating voice-over script:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to generate voice-over script',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get existing voice-over script for a session
+  app.get('/api/cua/voiceover/:sessionId', async (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      
+      const voiceAgent = new MetadataVoiceAgent();
+      const script = await voiceAgent.getVoiceOverScript(sessionId);
+
+      if (!script) {
+        return res.status(404).json({ 
+          success: false,
+          error: 'Voice-over script not found for this session' 
+        });
+      }
+
+      res.json({
+        success: true,
+        script
+      });
+    } catch (error) {
+      console.error('Error fetching voice-over script:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to fetch voice-over script',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // List all available voice-over scripts
+  app.get('/api/cua/voiceovers', async (req, res) => {
+    try {
+      const voiceAgent = new MetadataVoiceAgent();
+      const scripts = await voiceAgent.listVoiceOverScripts();
+
+      res.json({
+        success: true,
+        scripts,
+        count: scripts.length
+      });
+    } catch (error) {
+      console.error('Error listing voice-over scripts:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to list voice-over scripts',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get voice-over script in markdown format
+  app.get('/api/cua/voiceover/:sessionId/markdown', (req, res) => {
+    try {
+      const { sessionId } = req.params;
+      const markdownPath = path.join('uploads', 'cua-sessions', sessionId, 'voiceover-script.md');
+      
+      if (fs.existsSync(markdownPath)) {
+        res.setHeader('Content-Type', 'text/markdown');
+        res.sendFile(path.resolve(markdownPath));
+      } else {
+        res.status(404).json({ 
+          success: false,
+          error: 'Voice-over script markdown not found' 
+        });
+      }
+    } catch (error) {
+      console.error('Error serving voice-over markdown:', error);
+      res.status(500).json({ 
+        success: false,
+        error: 'Failed to serve voice-over markdown',
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
 
   return httpServer;
 }

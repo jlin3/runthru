@@ -112,6 +112,10 @@ const Home = () => {
 
   return (
     <main className="min-h-screen p-4 bg-gray-50 flex flex-col items-center justify-center">
+      <header className="w-full max-w-5xl mx-auto mb-8 flex flex-col items-center">
+        <h1 className="text-5xl font-extrabold text-blue-700 tracking-tight mb-2">RunThru</h1>
+        <p className="text-lg text-gray-600 font-medium">Agentic Feature Walk-Thru Videos</p>
+      </header>
       <div className="w-full max-w-5xl mx-auto flex flex-col lg:flex-row gap-8 items-start">
         {/* Left Column - Form */}
         <div className="flex-1 w-full max-w-xl space-y-6">
@@ -178,7 +182,7 @@ const Home = () => {
                   : "bg-green-600 hover:bg-green-700"
               }`}
             >
-              {isProcessing ? "Running Test..." : "Start Test Recording"}
+              {isProcessing ? "Running Test..." : "Create RunThru"}
             </button>
           </form>
 

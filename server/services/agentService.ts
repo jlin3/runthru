@@ -1,8 +1,5 @@
-// @ts-ignore - openai-agents types may not be fully compatible
-import { Agent, tool } from "openai-agents";
+import { Agent, tool, run } from "@openai/agents";
 import { chromium, type Browser, type BrowserContext, type Page } from "playwright";
-import { playwrightService } from "./playwrightService.js";
-import { videoService } from "./videoService.js";
 import { openaiService } from "./openaiService.js";
 import path from "path";
 import fs from "fs";
@@ -38,14 +35,160 @@ class AgentService {
   private agent: Agent;
 
   constructor() {
+    // Create browser automation tools
+    const runBrowserStep = tool({
+      name: "runBrowserStep",
+      description: "Execute a single browser automation step",
+      parameters: {
+        type: "object",
+        properties: {
+          action: {
+            type: "string",
+            description: "The action to perform: navigate, click, fill, wait, scroll, press",
+            enum: ["navigate", "click", "fill", "wait", "scroll", "press"]
+          },
+          target: {
+            type: "string", 
+            description: "Target selector, text, URL, or value for the action"
+          },
+          value: {
+            type: "string",
+            description: "Value to fill (only for fill action)"
+          }
+        },
+        required: ["action"],
+        additionalProperties: false
+      },
+      execute: async ({ action, target, value }: { action: string; target?: string; value?: string }): Promise<string> => {
+        return await this.runBrowserStep(action, target, value);
+      }
+    });
+
+    const analyzePage = tool({
+      name: "analyzePage", 
+      description: "Analyze the current page content and structure",
+      parameters: {
+        type: "object",
+        properties: {},
+        additionalProperties: false
+      },
+    })(async (): Promise<string> => {
+      return await this.analyzePage();
+    });
+
+    const startRecording = tool({
+      name: "startRecording",
+      description: "Start browser recording session", 
+      parameters: {
+        type: "object",
+        properties: {
+          url: {
+            type: "string",
+            description: "URL to navigate to"
+          },
+          viewport: {
+            type: "string", 
+            description: "Viewport size (e.g. '1920x1080')",
+            default: "1920x1080"
+          },
+          browser: {
+            type: "string",
+            description: "Browser type",
+            default: "chromium"
+          }
+        },
+        required: ["url"],
+        additionalProperties: false
+      },
+    })(async ({ url, viewport = "1920x1080", browser = "chromium" }: { 
+      url: string; 
+      viewport?: string; 
+      browser?: string 
+    }): Promise<string> => {
+      return await this.startRecording(url, viewport, browser);
+    });
+
+    const stopRecording = tool({
+      name: "stopRecording",
+      description: "Stop recording and get video path",
+      parameters: {
+        type: "object", 
+        properties: {},
+        additionalProperties: false
+      },
+    })(async (): Promise<string> => {
+      return await this.stopRecording();
+    });
+
+    const verifyElement = tool({
+      name: "verifyElement",
+      description: "Verify an element exists and is visible",
+      parameters: {
+        type: "object",
+        properties: {
+          selector: {
+            type: "string",
+            description: "CSS selector for the element"
+          },
+          expectedText: {
+            type: "string", 
+            description: "Expected text content (optional)"
+          }
+        },
+        required: ["selector"],
+        additionalProperties: false
+      },
+    })(async ({ selector, expectedText }: { selector: string; expectedText?: string }): Promise<string> => {
+      return await this.verifyElement(selector, expectedText);
+    });
+
+    const takeScreenshot = tool({
+      name: "takeScreenshot",
+      description: "Take a screenshot of the current page",
+      parameters: {
+        type: "object",
+        properties: {
+          name: {
+            type: "string",
+            description: "Custom filename for the screenshot"
+          }
+        },
+        additionalProperties: false
+      },
+    })(async ({ name }: { name?: string }): Promise<string> => {
+      return await this.takeScreenshot(name);
+    });
+
+    const generateTestPlan = tool({
+      name: "generateTestPlan", 
+      description: "Generate a comprehensive test plan",
+      parameters: {
+        type: "object",
+        properties: {
+          description: {
+            type: "string",
+            description: "Test description"
+          },
+          targetUrl: {
+            type: "string", 
+            description: "Target URL for testing"
+          }
+        },
+        required: ["description", "targetUrl"],
+        additionalProperties: false
+      },
+    })(async ({ description, targetUrl }: { description: string; targetUrl: string }): Promise<string> => {
+      return await this.generateTestPlan(description, targetUrl);
+    });
+
     // Initialize the agent with tools
     this.agent = new Agent({
-      model: "gpt-4o",
+      name: "RunThru QA Agent",
       instructions: `You are RunThru, an expert QA automation agent. You help create, execute, and verify automated tests.
 
 Your capabilities:
 - Navigate web pages and interact with elements
-- Analyze page content and structure
+- Analyze page content and structure  
 - Generate detailed test steps
 - Execute browser automation
 - Create comprehensive test reports
@@ -53,20 +196,18 @@ Your capabilities:
 
 Always be thorough, accurate, and provide clear explanations of your actions.`,
       tools: [
-        this.runBrowserStep,
-        this.analyzePage,
-        this.getPageState,
-        this.startRecording,
-        this.stopRecording,
-        this.generateTestPlan,
-        this.verifyElement,
-        this.takeScreenshot
+        runBrowserStep,
+        analyzePage, 
+        startRecording,
+        stopRecording,
+        verifyElement,
+        takeScreenshot,
+        generateTestPlan
       ],
     });
   }
 
-  // Tool: Execute a single browser automation step
-  @tool
+  // Implementation methods
   async runBrowserStep(action: string, target?: string, value?: string): Promise<string> {
     if (!this.session.page) {
       throw new Error("Browser session not started. Call startRecording first.");
@@ -85,10 +226,8 @@ Always be thorough, accurate, and provide clear explanations of your actions.`,
         case 'click':
           if (!target) throw new Error("Target selector or text required for click");
           try {
-            // Try clicking by text first
             await page.getByText(target).first().click({ timeout: 5000 });
           } catch {
-            // Fallback to selector
             await page.locator(target).first().click({ timeout: 5000 });
           }
           return `Successfully clicked on "${target}"`;
@@ -122,8 +261,6 @@ Always be thorough, accurate, and provide clear explanations of your actions.`,
     }
   }
 
-  // Tool: Analyze the current page content and structure
-  @tool
   async analyzePage(): Promise<string> {
     if (!this.session.page) {
       throw new Error("Browser session not started");
@@ -132,11 +269,9 @@ Always be thorough, accurate, and provide clear explanations of your actions.`,
     try {
       const page = this.session.page;
       
-      // Get page info
       const url = page.url();
       const title = await page.title();
       
-      // Get interactive elements
       const elements = await page.evaluate(() => {
         const interactiveElements = document.querySelectorAll('button, a, input, select, textarea, [role="button"], [onclick]');
         return Array.from(interactiveElements).slice(0, 20).map(el => ({
@@ -160,44 +295,15 @@ ${elements.map(el => `- ${el.tag}${el.type ? `[${el.type}]` : ''}: "${el.text}" 
     }
   }
 
-  // Tool: Get detailed page state
-  @tool
-  async getPageState(): Promise<PageState> {
-    if (!this.session.page) {
-      throw new Error("Browser session not started");
-    }
-
-    const page = this.session.page;
-    const url = page.url();
-    const title = await page.title();
-    
-    const elements = await page.evaluate(() => {
-      const allElements = document.querySelectorAll('button, a, input, select, textarea, [role="button"]');
-      return Array.from(allElements).slice(0, 30).map(el => ({
-        tag: el.tagName.toLowerCase(),
-        text: el.textContent?.trim().substring(0, 100) || '',
-        selector: el.id ? `#${el.id}` : el.className ? `.${el.className.split(' ')[0]}` : el.tagName.toLowerCase(),
-        type: el.getAttribute('type'),
-        placeholder: el.getAttribute('placeholder')
-      }));
-    });
-
-    return { url, title, elements };
-  }
-
-  // Tool: Start browser recording session
-  @tool
   async startRecording(url: string, viewport: string = "1920x1080", browser: string = "chromium"): Promise<string> {
     try {
       const [width, height] = viewport.split('x').map(Number);
       
-      // Launch browser
       this.session.browser = await chromium.launch({
-        headless: false, // Always show browser for demos
+        headless: false,
         args: ['--no-sandbox', '--disable-setuid-sandbox']
       });
 
-      // Create context with video recording
       const videoDir = path.join(process.cwd(), "uploads", "videos");
       if (!fs.existsSync(videoDir)) {
         fs.mkdirSync(videoDir, { recursive: true });
@@ -214,7 +320,6 @@ ${elements.map(el => `- ${el.tag}${el.type ? `[${el.type}]` : ''}: "${el.text}" 
       this.session.page = await this.session.context.newPage();
       this.session.isRecording = true;
 
-      // Navigate to initial URL
       await this.session.page.goto(url, { waitUntil: 'networkidle' });
 
       return `Recording started. Browser launched and navigated to ${url}`;
@@ -223,22 +328,18 @@ ${elements.map(el => `- ${el.tag}${el.type ? `[${el.type}]` : ''}: "${el.text}" 
     }
   }
 
-  // Tool: Stop recording and get video path
-  @tool
   async stopRecording(): Promise<string> {
     if (!this.session.isRecording) {
       return "No recording in progress";
     }
 
     try {
-      // Close browser to finalize video
       if (this.session.page) await this.session.page.close();
       if (this.session.context) await this.session.context.close();
       if (this.session.browser) await this.session.browser.close();
 
       this.session.isRecording = false;
 
-      // Find the video file
       const videoDir = path.join(process.cwd(), "uploads", "videos");
       const videoFiles = fs.readdirSync(videoDir).filter(f => f.endsWith('.webm'));
       
@@ -246,7 +347,6 @@ ${elements.map(el => `- ${el.tag}${el.type ? `[${el.type}]` : ''}: "${el.text}" 
         return "Recording stopped but no video file found";
       }
 
-      // Get the latest video
       const latestVideo = videoFiles
         .map(f => ({ name: f, time: fs.statSync(path.join(videoDir, f)).mtime }))
         .sort((a, b) => b.time.getTime() - a.time.getTime())[0];
@@ -260,8 +360,6 @@ ${elements.map(el => `- ${el.tag}${el.type ? `[${el.type}]` : ''}: "${el.text}" 
     }
   }
 
-  // Tool: Generate a comprehensive test plan
-  @tool
   async generateTestPlan(description: string, targetUrl: string): Promise<string> {
     try {
       const steps = await openaiService.generateTestSteps(description, targetUrl);
@@ -276,8 +374,6 @@ ${steps.map((step, i) => `${i + 1}. ${step}`).join('\n')}`;
     }
   }
 
-  // Tool: Verify an element exists and is visible
-  @tool
   async verifyElement(selector: string, expectedText?: string): Promise<string> {
     if (!this.session.page) {
       throw new Error("Browser session not started");
@@ -306,8 +402,6 @@ ${steps.map((step, i) => `${i + 1}. ${step}`).join('\n')}`;
     }
   }
 
-  // Tool: Take a screenshot
-  @tool
   async takeScreenshot(name?: string): Promise<string> {
     if (!this.session.page) {
       throw new Error("Browser session not started");
@@ -333,13 +427,8 @@ ${steps.map((step, i) => `${i + 1}. ${step}`).join('\n')}`;
   // Main method to run the agent
   async run(instruction: string): Promise<string> {
     try {
-      // Enable tracing if environment variable is set
-      if (process.env.OPENAI_TRACE === '1') {
-        console.log('🔍 OpenAI tracing enabled');
-      }
-
-      const response = await this.agent.run(instruction);
-      return response;
+      const result = await run(this.agent, instruction);
+      return result.finalOutput || "Agent completed successfully";
     } catch (error: any) {
       console.error('Agent execution error:', error);
       throw new Error(`Agent failed: ${error.message}`);

@@ -7,7 +7,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { supabaseService } from "./services/supabaseService.js";
-import { agentService } from "./services/agentService.js";
+import { simpleAgentService } from "./services/simpleAgentService.js";
 
 const app = express();
 app.use(express.json());
@@ -53,7 +53,7 @@ app.post('/api/agent/run', async (req, res) => {
     }
 
     console.log(`🤖 Running agent with instruction: ${instruction}`);
-    const result = await agentService.run(instruction);
+    const result = await simpleAgentService.run(instruction);
     
     res.json({ 
       success: true, 
@@ -82,7 +82,7 @@ app.post('/api/agent/demo', async (req, res) => {
       : `Create a demo recording of ${url}. Start recording, analyze the page structure, interact with key elements, take screenshots, and stop recording.`;
 
     console.log(`🎬 Running demo agent for: ${url}`);
-    const result = await agentService.run(instruction);
+    const result = await simpleAgentService.run(instruction);
     
     res.json({ 
       success: true, 
@@ -101,7 +101,7 @@ app.post('/api/agent/demo', async (req, res) => {
 
 app.post('/api/agent/cleanup', async (req, res) => {
   try {
-    await agentService.cleanup();
+    await simpleAgentService.cleanup();
     res.json({ success: true, message: 'Agent cleaned up successfully' });
   } catch (error: any) {
     console.error('Agent cleanup error:', error);

@@ -14,7 +14,8 @@
     "gcp:deploy:prod": "npm run gcp:build && gcloud app deploy --promote --stop-previous-version",
     "gcp:logs": "gcloud app logs tail -s default",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "test-agent": "tsx scripts/test-agent.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",
@@ -70,6 +71,7 @@
     "multer": "^2.0.1",
     "next-themes": "^0.4.6",
     "openai": "^5.1.0",
+    "openai-agents": "^1.1.0",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "playwright": "^1.52.0",

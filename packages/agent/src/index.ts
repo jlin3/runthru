@@ -1,23 +1,35 @@
-import { Agent, run } from "@openai/agents";
 import "dotenv/config";
+import { run } from "@openai/agents";
 
-import { planTest } from "./tools/planTest";
-import { runBrowser } from "./tools/runBrowser";
-import { mergeVideo } from "./tools/mergeVideo";
-import { postComment } from "./tools/postComment";
-
-const bot = new Agent({
-  name: "RunThru",
-  model: "gpt-4o-mini",
-  instructions:
-    "You are RunThru, a QA demo assistant. Plan steps, run them, narrate.",
-  tools: [planTest, runBrowser, mergeVideo, postComment],
-});
+import { plannerAgent } from "./agents/plannerAgent";
+import { browserAgent } from "./agents/browserAgent";
+import { mediaAgent } from "./agents/mediaAgent";
+import { publisherAgent } from "./agents/publisherAgent";
 
 async function main() {
-  const input = process.argv.slice(2).join(" ") || "Demo checkout flow";
-  const result = await run(bot, input);
-  console.log(JSON.stringify({ event: "agent_complete", output: result.finalOutput }));
+  const spec = process.argv.slice(2).join(" ") || "Demo checkout flow";
+
+  // Planner
+  console.log(JSON.stringify({ event: "handoff_start", agent: "PlannerAgent" }));
+  await run(plannerAgent, spec);
+  console.log(JSON.stringify({ event: "handoff_end", agent: "PlannerAgent" }));
+
+  // Browser
+  console.log(JSON.stringify({ event: "handoff_start", agent: "BrowserAgent" }));
+  await run(browserAgent, "run browser");
+  console.log(JSON.stringify({ event: "handoff_end", agent: "BrowserAgent" }));
+
+  // Media
+  console.log(JSON.stringify({ event: "handoff_start", agent: "MediaAgent" }));
+  const videoUrl = await run(mediaAgent, "merge media");
+  console.log(JSON.stringify({ event: "handoff_end", agent: "MediaAgent" }));
+
+  // Publisher
+  console.log(JSON.stringify({ event: "handoff_start", agent: "PublisherAgent" }));
+  await run(publisherAgent, (videoUrl as any)?.finalOutput ?? "placeholder.mp4");
+  console.log(JSON.stringify({ event: "handoff_end", agent: "PublisherAgent" }));
+
+  console.log(JSON.stringify({ event: "agent_complete", video: (videoUrl as any)?.finalOutput }));
 }
 
 main().catch((err) => {

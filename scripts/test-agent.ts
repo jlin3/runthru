@@ -1,6 +1,6 @@
 #!/usr/bin/env tsx
 
-import { agentService } from "../server/services/agentService.js";
+import { simpleAgentService } from "../server/services/simpleAgentService.js";
 import dotenv from "dotenv";
 
 // Load environment variables
@@ -47,7 +47,7 @@ Examples:
         ? `Create and run a demo test for "${testDescription}" on ${url}. Start recording, analyze the page, generate a test plan, execute some basic interactions, take screenshots, and stop recording.`
         : `Create a demo recording of ${url}. Start recording, analyze the page structure, interact with key elements, take screenshots, and stop recording.`;
 
-      const result = await agentService.run(instruction);
+      const result = await simpleAgentService.run(instruction);
       console.log('\n🎉 Demo completed!');
       console.log('\n📋 Result:');
       console.log(result);
@@ -57,7 +57,7 @@ Examples:
       const instruction = args.join(' ');
       console.log(`🤖 Running instruction: ${instruction}`);
       
-      const result = await agentService.run(instruction);
+      const result = await simpleAgentService.run(instruction);
       console.log('\n✅ Agent completed!');
       console.log('\n📋 Result:');
       console.log(result);
@@ -69,7 +69,7 @@ Examples:
   } finally {
     // Always cleanup
     try {
-      await agentService.cleanup();
+      await simpleAgentService.cleanup();
       console.log('\n🧹 Cleanup completed');
     } catch (cleanupError) {
       console.error('⚠️ Cleanup error:', cleanupError);
@@ -83,7 +83,7 @@ Examples:
 process.on('SIGINT', async () => {
   console.log('\n🛑 Interrupted, cleaning up...');
   try {
-    await agentService.cleanup();
+    await simpleAgentService.cleanup();
   } catch (error) {
     console.error('Cleanup error:', error);
   }

@@ -4,7 +4,7 @@ import { createServer, type Server } from "http";
 import { WebSocketServer } from "ws";
 import { storage } from "./storage";
 import { unifiedStorage } from "./services/unifiedStorageService";
-import { insertRecordingSchema, type Recording } from "@shared/schema";
+import { insertRecordingSchema, type Recording } from "../shared/schema";
 import { openaiService } from "./services/openaiService";
 import { elevenlabsService } from "./services/elevenlabsService";
 import { playwrightService } from "./services/playwrightService";

@@ -1,5 +1,5 @@
-import { IStorage, MemStorage } from '../../../server/storage';
-import { Recording, InsertRecording, AuthUser } from '../../../shared/schema';
+import { IStorage, MemStorage } from '../storage';
+import { Recording, InsertRecording, AuthUser } from '../../shared/schema';
 import fs from 'fs';
 import path from 'path';
 

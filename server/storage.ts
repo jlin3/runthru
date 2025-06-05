@@ -1,4 +1,4 @@
-import { recordings, type Recording, type InsertRecording } from "@shared/schema";
+import { recordings, type Recording, type InsertRecording } from "../shared/schema";
 import { gcpStorageService } from "./services/gcpStorageService";
 import fs from "fs";
 

@@ -5,10 +5,10 @@
   "license": "MIT",
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "build": "npm run build:backend",
     "build:frontend": "vite build",
-    "build:backend": "esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "NODE_ENV=production node dist/index.js",
+    "build:backend": "esbuild server/index.prod.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
+    "start": "NODE_ENV=production node dist/index.prod.js",
     "gcp:build": "npm run build:backend",
     "gcp:deploy": "gcloud app deploy",
     "gcp:deploy:prod": "npm run gcp:build && gcloud app deploy --promote --stop-previous-version",

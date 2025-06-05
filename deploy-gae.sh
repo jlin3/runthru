@@ -42,14 +42,15 @@ fi
 echo "🔨 Building backend..."
 npm run build:backend
 
-# Set environment variables securely (optional, you can also set via console)
-echo "🔧 You may want to set environment variables:"
-echo "   gcloud app deploy --set-env-vars OPENAI_API_KEY=your_key,SUPABASE_URL=your_url,..."
-echo ""
-
 # Deploy to App Engine
 echo "🚀 Deploying to App Engine..."
 gcloud app deploy app.yaml --quiet
+
+# Note: Environment variables are already set in the running version
+echo ""
+echo "🔧 To update environment variables, use:"
+echo "   gcloud app deploy --set-env-vars OPENAI_API_KEY=your_key,SUPABASE_URL=your_url,..."
+echo "   Or set them via Google Cloud Console for better security"
 
 # Get the deployed URL
 URL=$(gcloud app describe --format="value(defaultHostname)")

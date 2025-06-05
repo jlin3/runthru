@@ -9,10 +9,12 @@ type Step = {
 };
 
 const INITIAL_STEPS: Step[] = [
-  { id: "plan_test", label: "Plan Test", status: "pending" },
-  { id: "run_browser", label: "Run Browser", status: "pending" },
-  { id: "merge_video", label: "Merge Video", status: "pending" },
-  { id: "post_comment", label: "Post Comment", status: "pending" },
+  { id: "plan_test", label: "Test Script", status: "pending" },
+  { id: "run_browser", label: "Screen Record", status: "pending" },
+  { id: "generate_metadata", label: "Metadata Generation", status: "pending" },
+  { id: "generate_voiceover", label: "Voiceover", status: "pending" },
+  { id: "merge_video", label: "Demo Video", status: "pending" },
+  { id: "send_to_stakeholder", label: "Send to Stakeholders", status: "pending" },
 ];
 
 const Home = () => {
@@ -66,6 +68,10 @@ const Home = () => {
             updateStep(evt.tool, "running");
           } else if (evt.event === "tool_end") {
             updateStep(evt.tool, "done");
+          } else if (evt.event === "handoff_start") {
+            console.log(`Agent ${evt.agent} started`);
+          } else if (evt.event === "handoff_end") {
+            console.log(`Agent ${evt.agent} completed`);
           } else if (evt.event === "tts_complete") {
             setReplyAudio(evt.reply);
             setVideoUrl(evt.video);

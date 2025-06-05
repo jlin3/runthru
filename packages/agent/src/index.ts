@@ -1,35 +1,47 @@
 import "dotenv/config";
 import { run } from "@openai/agents";
 
-import { plannerAgent } from "./agents/plannerAgent";
-import { browserAgent } from "./agents/browserAgent";
-import { mediaAgent } from "./agents/mediaAgent";
-import { publisherAgent } from "./agents/publisherAgent";
+import { testScriptAgent } from "./agents/testScriptAgent";
+import { screenRecordAgent } from "./agents/screenRecordAgent";
+import { metadataAgent } from "./agents/metadataAgent";
+import { voiceoverAgent } from "./agents/voiceoverAgent";
+import { demoVideoAgent } from "./agents/demoVideoAgent";
+import { stakeholderAgent } from "./agents/stakeholderAgent";
 
 async function main() {
   const spec = process.argv.slice(2).join(" ") || "Demo checkout flow";
 
-  // Planner
-  console.log(JSON.stringify({ event: "handoff_start", agent: "PlannerAgent" }));
-  await run(plannerAgent, spec);
-  console.log(JSON.stringify({ event: "handoff_end", agent: "PlannerAgent" }));
+  // 1. Test Script Generation
+  console.log(JSON.stringify({ event: "handoff_start", agent: "TestScriptAgent" }));
+  const testScript = await run(testScriptAgent, spec);
+  console.log(JSON.stringify({ event: "handoff_end", agent: "TestScriptAgent" }));
 
-  // Browser
-  console.log(JSON.stringify({ event: "handoff_start", agent: "BrowserAgent" }));
-  await run(browserAgent, "run browser");
-  console.log(JSON.stringify({ event: "handoff_end", agent: "BrowserAgent" }));
+  // 2. Screen Recording
+  console.log(JSON.stringify({ event: "handoff_start", agent: "ScreenRecordAgent" }));
+  const recording = await run(screenRecordAgent, "Execute test script");
+  console.log(JSON.stringify({ event: "handoff_end", agent: "ScreenRecordAgent" }));
 
-  // Media
-  console.log(JSON.stringify({ event: "handoff_start", agent: "MediaAgent" }));
-  const videoUrl = await run(mediaAgent, "merge media");
-  console.log(JSON.stringify({ event: "handoff_end", agent: "MediaAgent" }));
+  // 3. Metadata Generation
+  console.log(JSON.stringify({ event: "handoff_start", agent: "MetadataAgent" }));
+  const metadata = await run(metadataAgent, "Analyze recording");
+  console.log(JSON.stringify({ event: "handoff_end", agent: "MetadataAgent" }));
 
-  // Publisher
-  console.log(JSON.stringify({ event: "handoff_start", agent: "PublisherAgent" }));
-  await run(publisherAgent, (videoUrl as any)?.finalOutput ?? "placeholder.mp4");
-  console.log(JSON.stringify({ event: "handoff_end", agent: "PublisherAgent" }));
+  // 4. Voiceover Generation
+  console.log(JSON.stringify({ event: "handoff_start", agent: "VoiceoverAgent" }));
+  const voiceover = await run(voiceoverAgent, "Create narration");
+  console.log(JSON.stringify({ event: "handoff_end", agent: "VoiceoverAgent" }));
 
-  console.log(JSON.stringify({ event: "agent_complete", video: (videoUrl as any)?.finalOutput }));
+  // 5. Demo Video Creation
+  console.log(JSON.stringify({ event: "handoff_start", agent: "DemoVideoAgent" }));
+  const finalVideo = await run(demoVideoAgent, "Merge video and audio");
+  console.log(JSON.stringify({ event: "handoff_end", agent: "DemoVideoAgent" }));
+
+  // 6. Send to Stakeholders
+  console.log(JSON.stringify({ event: "handoff_start", agent: "StakeholderAgent" }));
+  await run(stakeholderAgent, (finalVideo as any)?.finalOutput ?? "demo.mp4");
+  console.log(JSON.stringify({ event: "handoff_end", agent: "StakeholderAgent" }));
+
+  console.log(JSON.stringify({ event: "agent_complete", video: (finalVideo as any)?.finalOutput }));
 }
 
 main().catch((err) => {

@@ -544,11 +544,13 @@ async function executeRecording(
 
     let videoPath: string;
     try {
+      console.log("🎬 Starting Playwright recording with enhanced marketplace booking...");
       videoPath = await playwrightService.startRecording(
         recording.targetUrl,
         recording.testSteps,
         recording.browserConfig,
         (step: string, progress: number) => {
+          console.log(`📊 Playwright Progress: ${progress}% - ${step}`);
           broadcast({ 
             type: "recording_progress", 
             recordingId: id, 
@@ -561,8 +563,11 @@ async function executeRecording(
           });
         }
       );
+      console.log(`✅ Playwright recording completed successfully: ${videoPath}`);
     } catch (playwrightError) {
-      console.log("Using alternative recording method");
+      console.error("❌ Playwright recording failed:", playwrightError);
+      console.error("Stack trace:", playwrightError instanceof Error ? playwrightError.stack : playwrightError);
+      console.log("⚠️ Using alternative recording method (test pattern fallback)");
       videoPath = await createSystemRecording(recording, (step: string, progress: number) => {
         broadcast({ 
           type: "recording_progress", 

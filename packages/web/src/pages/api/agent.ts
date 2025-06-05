@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { spawn } from "child_process";
 
-const OPENAI_API_KEY = "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";
+const OPENAI_API_KEY = "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";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {

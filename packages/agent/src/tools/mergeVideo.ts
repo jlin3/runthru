@@ -31,7 +31,6 @@ export const mergeVideo = tool({
         '-i', cleanAudioPath,
         '-c:v', 'libx264', // Convert VP8 to H.264 for MP4 compatibility
         '-c:a', 'aac',
-        '-shortest',
         '-y', // overwrite output file
         outputPath
       ];

@@ -198,12 +198,18 @@ const Home = () => {
             <div className="bg-white p-4 rounded-lg shadow-sm border">
               <h3 className="text-lg font-semibold mb-2 text-gray-800">Demo Video Ready</h3>
               <a
-                href={videoUrl}
+                href={(() => {
+                  // If the backend returns a markdown link, extract the URL
+                  const match = videoUrl.match(/\[.*?\]\((.*?)\)/);
+                  if (match) return match[1];
+                  // If the backend returns a plain URL, use as is
+                  return videoUrl.replace(/\[.*?\]\((.*?)\)/, "$1").replace(/^.*?(https?:\/\/)/, "$1");
+                })()}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                📹 Watch Demo Video
+                📹 Open Demo Video
               </a>
             </div>
           )}

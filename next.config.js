@@ -6,9 +6,9 @@ const nextConfig = {
   experimental: {
     appDir: false
   },
-  distDir: 'packages/web/.next',
+  distDir: '.next',
   // Point to the source directory
   basePath: '',
 }
 
-module.exports = nextConfig 
+export default nextConfig 

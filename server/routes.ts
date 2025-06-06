@@ -16,10 +16,11 @@ import path from "path";
 import fs from "fs";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { getWritableDir, ensureDir } from "./utils/paths";
 
 // Configure multer for file uploads
 const upload = multer({
-  dest: "uploads/",
+  dest: process.env.NODE_ENV === "production" ? "/tmp/" : "uploads/",
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
@@ -252,7 +253,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const fileName = `avatar_${Date.now()}${path.extname(req.file.originalname)}`;
-      const newPath = path.join("uploads", fileName);
+      const avatarDir = getWritableDir("avatars");
+      ensureDir(avatarDir);
+      const newPath = path.join(avatarDir, fileName);
       
       fs.renameSync(req.file.path, newPath);
       
@@ -275,7 +278,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Serve uploaded files
-  app.use("/uploads", express.static("uploads"));
+  const uploadsDir = process.env.NODE_ENV === "production" ? "/tmp" : "uploads";
+  app.use("/uploads", express.static(uploadsDir));
 
   // Download recording video
   app.get("/api/recordings/:id/download", async (req, res) => {

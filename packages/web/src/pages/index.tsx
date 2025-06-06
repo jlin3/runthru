@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-// API Configuration
+// API Configuration - Updated for root directory fix
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://runthru-backend-prod.uc.r.appspot.com';
 
 type Step = {

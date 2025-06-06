@@ -8,7 +8,8 @@
   ],
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
-    "build": "npm run build:backend",
+    "build": "next build",
+    "start": "next start",
     "build:frontend": "vite build",
     "build:backend": "esbuild server/index.prod.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "start": "NODE_ENV=production node dist/index.prod.js",
@@ -22,6 +23,7 @@
   },
   "dependencies": {
     "@google-cloud/storage": "^7.16.0",
+    "next": "14.2.4",
     "@hookform/resolvers": "^3.10.0",
     "@jridgewell/trace-mapping": "^0.3.25",
     "@neondatabase/serverless": "^0.10.4",

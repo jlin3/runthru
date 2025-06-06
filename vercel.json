@@ -1,6 +1,0 @@
-{
-  "monorepo": true,
-  "buildCommand": "cd packages/web && npm install && npm run build",
-  "outputDirectory": "packages/web/.next",
-  "installCommand": "npm install --prefix packages/web"
-} 

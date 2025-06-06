@@ -61,3 +61,4 @@ server/public
 vite.config.ts.*
 *.tar.gz.env
 uploads/
+.vercel

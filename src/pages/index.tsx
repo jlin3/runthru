@@ -129,7 +129,7 @@ const Home = () => {
         }
       } catch (streamErr) {
         console.error("Stream reading error:", streamErr);
-        setSummaryLog((log) => [...log, `Stream error: ${streamErr.message}`]);
+        setSummaryLog((log) => [...log, `Stream error: ${streamErr instanceof Error ? streamErr.message : String(streamErr)}`]);
       }
     } catch (error: any) {
       console.error("Error submitting test:", error);

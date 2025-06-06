@@ -9,11 +9,11 @@
   "scripts": {
     "dev": "NODE_ENV=development tsx server/index.ts",
     "build": "npm run build:agent && next build",
-    "start": "next start",
+    "start": "NODE_ENV=production node dist/index.prod.js",
+    "start:frontend": "next start",
     "build:agent": "cd packages/agent && npm run build",
     "build:frontend": "vite build",
     "build:backend": "npm run build:agent && esbuild server/index.prod.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
-    "start": "NODE_ENV=production node dist/index.prod.js",
     "gcp:build": "npm run build:backend",
     "gcp:deploy": "gcloud app deploy",
     "gcp:deploy:prod": "npm run gcp:build && gcloud app deploy --promote --stop-previous-version",

@@ -873,7 +873,13 @@ async function createSystemRecording(
 async function runAgentPipelineStreaming(instruction: string, outputCallback: (data: string) => void): Promise<void> {
   return new Promise((resolve, reject) => {
     const agentPath = path.join(__dirname, "..", "packages", "agent");
-    const child = spawn("npx", ["tsx", "src/index.ts", instruction], {
+    
+    // In production, use compiled JavaScript; in development, use tsx
+    const isProduction = process.env.NODE_ENV === "production";
+    const command = isProduction ? "node" : "npx";
+    const args = isProduction ? ["dist/index.js", instruction] : ["tsx", "src/index.ts", instruction];
+    
+    const child = spawn(command, args, {
       cwd: agentPath,
       stdio: ['pipe', 'pipe', 'pipe'],
       env: { ...process.env }

@@ -15,8 +15,9 @@ export const runBrowser = tool({
     console.log(JSON.stringify({ event: "tool_start", tool: "run_browser", detail: "Launching browser..." }));
     console.log(JSON.stringify({ event: "debug", tool: "run_browser", detail: `Received plan: ${plan}` }));
     
-    // Ensure uploads directory exists
-    const uploadsDir = join(process.cwd(), "uploads", "videos");
+    // Use /tmp in production, uploads in development
+    const baseDir = process.env.NODE_ENV === "production" ? "/tmp" : process.cwd();
+    const uploadsDir = join(baseDir, "uploads", "videos");
     if (!fs.existsSync(uploadsDir)) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }

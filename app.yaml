@@ -12,6 +12,7 @@ automatic_scaling:
 # Environment variables
 env_variables:
   NODE_ENV: production
+  # OPENAI_API_KEY should be set in Google App Engine environment
   # OPENAI_API_KEY: Set via gcloud command for security
 
 # Build configuration

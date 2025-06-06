@@ -23,7 +23,9 @@ export const generateVoiceover = tool({
         input: text,
       });
       
-      const audioDir = join(process.cwd(), 'uploads', 'audio');
+      // Use /tmp in production, uploads in development
+      const baseDir = process.env.NODE_ENV === "production" ? "/tmp" : join(process.cwd(), 'uploads');
+      const audioDir = join(baseDir, 'audio');
       await fs.ensureDir(audioDir);
       const filePath = join(audioDir, `voiceover-${Date.now()}.mp3`);
       const buffer = Buffer.from(await response.arrayBuffer());

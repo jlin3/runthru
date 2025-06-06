@@ -3,7 +3,6 @@ import fs from 'fs-extra';
 import path from 'path';
 import { z } from 'zod';
 import { spawn } from 'child_process';
-import ffmpegPath from 'ffmpeg-static';
 
 export const mergeVideo = tool({
   description: 'Merges a video file and an audio file into a single MP4.',
@@ -13,14 +12,14 @@ export const mergeVideo = tool({
   }),
   execute: async ({ videoPath, audioPath }) => {
     return new Promise((resolve, reject) => {
-      const outputDir = path.join(process.cwd(), 'uploads', 'demos');
+      // Use /tmp in production, uploads in development
+      const baseDir = process.env.NODE_ENV === "production" ? "/tmp" : path.join(process.cwd(), 'uploads');
+      const outputDir = path.join(baseDir, 'demos');
       fs.ensureDirSync(outputDir);
       const outputPath = path.join(outputDir, `demo-${Date.now()}.mp4`);
 
-      if (!ffmpegPath) {
-        reject(new Error('ffmpeg-static not found'));
-        return;
-      }
+      // Use system ffmpeg instead of ffmpeg-static
+      const ffmpegCommand = process.env.NODE_ENV === "production" ? "ffmpeg" : "/opt/homebrew/bin/ffmpeg";
 
       // Clean the paths - remove any "sandbox:" protocol prefix
       const cleanVideoPath = videoPath.replace(/^sandbox:/, '');
@@ -35,7 +34,7 @@ export const mergeVideo = tool({
         outputPath
       ];
 
-      const ffmpegProcess = spawn(ffmpegPath, ffmpegArgs);
+      const ffmpegProcess = spawn(ffmpegCommand, ffmpegArgs);
       let stderr = '';
 
       ffmpegProcess.stderr.on('data', (data) => {

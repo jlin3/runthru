@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import express from "express";
+import cors from "cors";
 import { createServer, type Server } from "http";
 import { WebSocketServer } from "ws";
 import { storage } from "./storage";
@@ -17,6 +18,12 @@ import fs from "fs";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { getWritableDir, ensureDir } from "./utils/paths";
+import { spawn } from "child_process";
+import { fileURLToPath } from "url";
+
+// Get __dirname equivalent for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configure multer for file uploads
 const upload = multer({
@@ -35,6 +42,25 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
+  
+  // Configure CORS to allow frontend access
+  app.use(cors({
+    origin: [
+      'http://localhost:3000', // Local development
+      'http://localhost:3001', // Local development (alt port)
+      'https://runthru.co', // Production domain
+      'https://www.runthru.co', // Production domain with www
+      'https://runthru-pinly.vercel.app', // Production frontend (old)
+      'https://runthru-fu1kguqju-pinly.vercel.app', // Production frontend 
+      'https://runthru-7je28zl78-pinly.vercel.app', // Production frontend (latest)
+      'https://runthru-mrm2o0hof-pinly.vercel.app', // Production frontend (current)
+      'https://runthru-frontend.vercel.app', // Alternative frontend URL
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
+
   // Temporarily disable WebSocket to troubleshoot
   // const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
@@ -74,6 +100,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
         message: "Failed to get storage info",
         error: error instanceof Error ? error.message : "Unknown error"
       });
+    }
+  });
+
+  // Agent pipeline endpoint with streaming support
+  app.post("/api/agent", async (req, res) => {
+    try {
+      const { testDescription, prLink, isConnectedToGithub } = req.body;
+      
+      if (!testDescription) {
+        return res.status(400).json({ error: 'Test description is required' });
+      }
+
+      // Set up streaming response
+      res.writeHead(200, {
+        'Content-Type': 'text/plain',
+        'Transfer-Encoding': 'chunked',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive'
+      });
+
+      console.log(`🎬 Running agent pipeline for: ${testDescription}`);
+      
+      // Create instruction based on frontend inputs
+      let instruction = `Create a demo recording based on: "${testDescription}".`;
+      if (prLink) {
+        instruction += ` Related to GitHub PR: ${prLink}.`;
+      }
+      instruction += ' Execute the full 6-agent pipeline: plan test, run browser recording, generate metadata, create voiceover, merge video, and send to stakeholders.';
+
+      try {
+        await runAgentPipelineStreaming(instruction, (data) => {
+          // Parse each line as potential JSON event
+          const lines = data.split('\n');
+          for (const line of lines) {
+            if (line.trim()) {
+              try {
+                const parsed = JSON.parse(line);
+                if (parsed.event) {
+                  res.write(line + '\n');
+                }
+              } catch (e) {
+                // Not a JSON event, but might be important output
+                console.log('Agent output:', line);
+              }
+            }
+          }
+        });
+        
+        res.end();
+        
+      } catch (error: any) {
+        res.write(JSON.stringify({ 
+          event: "error", 
+          error: error.message 
+        }) + '\n');
+        res.end();
+      }
+      
+    } catch (error: any) {
+      console.error('Agent route error:', error);
+      res.write(JSON.stringify({ 
+        event: "error", 
+        error: error.message 
+      }) + '\n');
+      res.end();
     }
   });
 
@@ -776,4 +867,37 @@ async function createSystemRecording(
   } catch (error) {
     throw new Error("Failed to create system recording");
   }
+}
+
+// Function to run agent pipeline with streaming output
+async function runAgentPipelineStreaming(instruction: string, outputCallback: (data: string) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const agentPath = path.join(__dirname, "..", "packages", "agent");
+    const child = spawn("npx", ["tsx", "src/index.ts", instruction], {
+      cwd: agentPath,
+      stdio: ['pipe', 'pipe', 'pipe'],
+      env: { ...process.env }
+    });
+
+    child.stdout.on('data', (data) => {
+      const output = data.toString();
+      outputCallback(output);
+    });
+
+    child.stderr.on('data', (data) => {
+      console.error('Agent stderr:', data.toString());
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Agent process exited with code ${code}`));
+      }
+    });
+
+    child.on('error', (error) => {
+      reject(error);
+    });
+  });
 }

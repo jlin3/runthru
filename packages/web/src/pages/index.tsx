@@ -1,5 +1,8 @@
 import { useState } from "react";
 
+// API Configuration
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://runthru-backend-prod.uc.r.appspot.com';
+
 type Step = {
   id: string;
   label: string;
@@ -56,7 +59,10 @@ const Home = () => {
     setSummaryLog([]);
 
     try {
-      const resp = await fetch("/api/agent", {
+      const apiUrl = `${API_BASE_URL}/api/agent`;
+      console.log('Making request to:', apiUrl);
+      
+      const resp = await fetch(apiUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -68,50 +74,67 @@ const Home = () => {
         }),
       });
 
-      if (!resp.body) return;
+      if (!resp.ok) {
+        throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+      }
+
+      if (!resp.body) {
+        throw new Error("No response body received");
+      }
 
       const reader = resp.body.getReader();
       const decoder = new TextDecoder();
       let buffer = "";
 
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        buffer += decoder.decode(value, { stream: true });
-        let newlineIndex;
-        while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
-          const line = buffer.slice(0, newlineIndex).trim();
-          buffer = buffer.slice(newlineIndex + 1);
-          if (!line) continue;
-          try {
-            const evt = JSON.parse(line);
-            if (evt.event === "tool_start") {
-              updateStep(evt.tool, "running");
-              setSummaryLog((log) => [...log, `Started: ${evt.tool.replace(/_/g, ' ')}`]);
-            } else if (evt.event === "tool_end") {
-              updateStep(evt.tool, "done");
-              setSummaryLog((log) => [...log, `Completed: ${evt.tool.replace(/_/g, ' ')}`]);
-            } else if (evt.event === "handoff_start") {
-              setSummaryLog((log) => [...log, `Agent: ${evt.agent} started`]);
-            } else if (evt.event === "handoff_end") {
-              setSummaryLog((log) => [...log, `Agent: ${evt.agent} completed`]);
-            } else if (evt.event === "tts_complete") {
-              setReplyAudio(evt.reply);
-              setVideoUrl(evt.video);
-            } else if (evt.event === "agent_complete") {
-              setVideoUrl(evt.video);
-              setSummaryLog((log) => [...log, "Agent pipeline complete."]);
-            } else if (evt.event === "error") {
-              setSummaryLog((log) => [...log, `Error: ${evt.error}`]);
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          
+          buffer += decoder.decode(value, { stream: true });
+          let newlineIndex;
+          while ((newlineIndex = buffer.indexOf("\n")) !== -1) {
+            const line = buffer.slice(0, newlineIndex).trim();
+            buffer = buffer.slice(newlineIndex + 1);
+            if (!line) continue;
+            
+            try {
+              const evt = JSON.parse(line);
+              console.log('Received event:', evt);
+              
+              if (evt.event === "tool_start") {
+                updateStep(evt.tool, "running");
+                setSummaryLog((log) => [...log, `Started: ${evt.tool.replace(/_/g, ' ')}`]);
+              } else if (evt.event === "tool_end") {
+                updateStep(evt.tool, "done");
+                setSummaryLog((log) => [...log, `Completed: ${evt.tool.replace(/_/g, ' ')}`]);
+              } else if (evt.event === "handoff_start") {
+                setSummaryLog((log) => [...log, `Agent: ${evt.agent} started`]);
+              } else if (evt.event === "handoff_end") {
+                setSummaryLog((log) => [...log, `Agent: ${evt.agent} completed`]);
+              } else if (evt.event === "tts_complete") {
+                setReplyAudio(evt.reply);
+                setVideoUrl(evt.video);
+              } else if (evt.event === "agent_complete") {
+                setVideoUrl(evt.video);
+                setSummaryLog((log) => [...log, "Agent pipeline complete."]);
+              } else if (evt.event === "error") {
+                setSummaryLog((log) => [...log, `Error: ${evt.error || evt.detail}`]);
+              }
+            } catch (parseErr) {
+              console.error("Failed to parse event:", line, parseErr);
+              setSummaryLog((log) => [...log, `Received: ${line.substring(0, 50)}...`]);
             }
-          } catch (err) {
-            console.error("Failed to parse", line, err);
           }
         }
+      } catch (streamErr) {
+        console.error("Stream reading error:", streamErr);
+        setSummaryLog((log) => [...log, `Stream error: ${streamErr.message}`]);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error submitting test:", error);
-      alert("Error running test. Please try again.");
+      setSummaryLog((log) => [...log, `Connection error: ${error.message}`]);
+      alert(`Error running test: ${error.message}. Please try again.`);
     } finally {
       setIsProcessing(false);
     }
